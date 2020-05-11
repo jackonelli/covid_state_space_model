@@ -1,0 +1,8 @@
+.mypy_cache
+.DS_Store
+venv
+*.html
+*.json
+*.yaml
+*.pyc
+__pycache__
