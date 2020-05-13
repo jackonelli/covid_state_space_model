@@ -1,23 +1,28 @@
 """Data module"""
+from typing import Union, Dict
 from pathlib import Path
 import json
+from datetime import datetime
+from collections import OrderedDict
 import numpy as np
 
-SWE_TO_ENG = {
+SWE_TO_ENG = OrderedDict({
     "Fall": "cases",
     "Fall idag": "daily_cases",
     "Döda": "deceased",
     "Döda idag": "daily_deceased",
     "På IVA": "in_icu",
     "På sjukhus": "in_hospital"
-}
+})
 
 ENG_TO_SWE = {val: key for (key, val) in SWE_TO_ENG.items()}
 
 
 class C19Data:
+    """C19Data"""
     def __init__(self, cases, daily_cases, deceased, daily_deceased, in_icu,
                  in_hospital):
+        self.created = datetime.now()
         self.cases = cases
         self.daily_cases = daily_cases
         self.deceased = deceased
@@ -32,32 +37,32 @@ class C19Data:
         ]
 
     @staticmethod
-    def from_yaml_dict(yaml):
+    def from_yaml_dict(yaml: Dict):
         """Into object from yaml parsed from website"""
-        if not "series" in yaml:
+        if "series" not in yaml:
             raise KeyError("Expected key 'series' to be in dict root")
         series = yaml["series"]
-        cases = C19Data._parse_series(series, "Fall")
-        daily_cases = C19Data._parse_series(series, "Fall idag")
-        deceased = C19Data._parse_series(series, "Döda")
-        daily_deceased = C19Data._parse_series(series, "Döda idag")
-        in_icu = C19Data._parse_series(series, "På IVA")
-        in_hospital = C19Data._parse_series(series, "På sjukhus")
-        return C19Data(cases, daily_cases, deceased, daily_deceased, in_icu,
-                       in_hospital)
+        return C19Data(*[
+            C19Data._parse_series(series, serie_name)
+            for serie_name in SWE_TO_ENG
+        ])
 
     def to_dict(self):
-        return {
+        """To dictionary"""
+        dict_ = {
             data.name: {
                 "x": data.x.tolist(),
                 "y": data.y.tolist()
             }
             for data in self._to_list()
         }
+        dict_["created"] = self.created.strftime("%Y-%m-%dT%H:%M:%S")
+        return dict_
 
-    def save_to_json(self, filename):
+    def save_to_json(self, filename: Union[str, Path]):
+        """Write data as dict to json file"""
         dict_ = self.to_dict()
-        with open(str(filename), 'w') as fp:
+        with open(str(filename), "w") as fp:
             json.dump(dict_, fp, indent=4, sort_keys=True)
 
     @staticmethod
@@ -69,13 +74,14 @@ class C19Data:
                 for point in serie["data"]:
                     x_data.append(point["x"])
                     y_data.append(point["y"])
-                return Data(SWE_TO_ENG[name], np.array(x_data),
-                            np.array(y_data))
+                return Serie(SWE_TO_ENG[name], np.array(x_data),
+                             np.array(y_data))
 
         raise KeyError("Expected key '{}' to be in dict root".format(name))
 
 
-class Data:
+class Serie:
+    """Series"""
     def __init__(self, name, x, y):
         self.name = name
         self.x = x

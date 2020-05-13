@@ -75,13 +75,19 @@ def parse_to_dict(series_string):
 
 
 def _get_local_source(pseudo_url: Union[str, Path]):
+    """Get locally stored html file.
+
+    Avoids a download of the full site.
+    Used only for testing during development since no new data is parsed.
+    Raises exception if file does not exist or does not have a 'html' extension
+    """
     pseudo_url = Path(pseudo_url)
     if pseudo_url.exists():
-        if pseudo_url.suffix == "html":
+        if pseudo_url.suffix == ".html":
             return Bs(open(TEST_URL), "html.parser")
-        else:
-            raise ValueError("Expected file type 'html', found '{}'".format(
-                pseudo_url.suffix))
+
+        raise ValueError("Expected file type 'html', found '{}'".format(
+            pseudo_url.suffix))
     raise FileNotFoundError(
         "Local url '{}' does not exist. Re-run without 'use_local' arg.".
         format(pseudo_url.name))
