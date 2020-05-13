@@ -1,5 +1,4 @@
 pyyaml
 requests
 beautifulsoup4
-slimit
 numpy
