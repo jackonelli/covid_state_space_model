@@ -1,4 +1,5 @@
 """Data scraper for C19-site"""
+from typing import Union
 import argparse
 import re
 from pathlib import Path
@@ -9,6 +10,7 @@ from data_parsers import data
 
 URL = "https://c19.se/"
 TEST_URL = (Path.cwd() / "raw.html")
+"""Regex patterns to match data entry in javascript"""
 SERIES_START = re.compile(r"^\s*series: \[{\s*$")
 SERIES_END = re.compile(r"^\s*}],\s*$")
 
@@ -28,18 +30,10 @@ def main():
     parsed_data.save_to_json(args.output_file)
 
 
-def _get_local_source(pseudo_url):
-    if pseudo_url.exists():
-        return Bs(open(TEST_URL), "html.parser")
-    raise FileNotFoundError(
-        "Local html '{}' does not exist. Re-run without 'use_local' arg.")
-
-
 def extract_data_script(source):
     """Heuristic search for the correct script tag
     TODO: More specific search than just the size of the script.
     """
-
     data_script = None
     for script in source.find_all("script"):
         if script.contents:
@@ -80,12 +74,26 @@ def parse_to_dict(series_string):
     return series_dict
 
 
+def _get_local_source(pseudo_url: Union[str, Path]):
+    pseudo_url = Path(pseudo_url)
+    if pseudo_url.exists():
+        if pseudo_url.suffix == "html":
+            return Bs(open(TEST_URL), "html.parser")
+        else:
+            raise ValueError("Expected file type 'html', found '{}'".format(
+                pseudo_url.suffix))
+    raise FileNotFoundError(
+        "Local url '{}' does not exist. Re-run without 'use_local' arg.".
+        format(pseudo_url.name))
+
+
 def parse_args():
     """Args"""
     parser = argparse.ArgumentParser(description="Scrape data from 'C19.SE'")
     parser.add_argument(
         "--output-file",
         type=str,
+        required=True,
         help="Location to save data to. Will overwrite existing file.")
     parser.add_argument(
         "--use_local",
