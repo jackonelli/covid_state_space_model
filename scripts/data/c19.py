@@ -5,6 +5,7 @@ import json
 from datetime import datetime
 from collections import OrderedDict
 import numpy as np
+from data.common import Serie
 
 SWE_TO_ENG = OrderedDict({
     "Fall": "cases",
@@ -78,14 +79,3 @@ class C19Data:
                              np.array(y_data))
 
         raise KeyError("Expected key '{}' to be in dict root".format(name))
-
-
-class Serie:
-    """Series"""
-    def __init__(self, name, x, y):
-        self.name = name
-        self.x = x
-        self.y = y
-
-    def to_dict(self):
-        return {self.name: {"x": self.x, "y": self.y}}

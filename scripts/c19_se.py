@@ -1,4 +1,20 @@
-"""Data scraper for C19-site"""
+"""Data scraper for C19-site
+
+This script downloads the full html source code for the page
+https://c19.se/
+
+Then it locates the correct <script> tag (out of several possible)
+and uses a regex to read a JSON-like struct to a string.
+
+The string is parsed to the data format YAML,
+it is a superset of JSON and able to handle a larger set of strings
+(specifically here we need to be able to parse keys not in quotation marks).
+
+The YAML data constructs a local data class `data.c19.C19Data`
+and writes it to a JSON file. This last step can of course be modified to
+instead write to another format.
+"""
+
 from typing import Union
 import argparse
 import re
@@ -6,7 +22,7 @@ from pathlib import Path
 import yaml
 import requests
 from bs4 import BeautifulSoup as Bs
-from data_parsers import data
+from data import c19
 
 URL = "https://c19.se/"
 TEST_URL = (Path.cwd() / "raw.html")
@@ -26,7 +42,7 @@ def main():
     data_script = extract_data_script(source)
     time_series = extract_time_series(data_script)
     yaml_data = parse_to_dict(time_series)
-    parsed_data = data.C19Data.from_yaml_dict(yaml_data)
+    parsed_data = c19.C19Data.from_yaml_dict(yaml_data)
     parsed_data.save_to_json(args.output_file)
 
 
