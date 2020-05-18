@@ -22,8 +22,8 @@ def non_linear_kalman_filter(measurements, prior_mean, prior_cov, motion_model,
     Returns:
         filtered_mean np.array(n, K): Filtered estimates for times 1,..., K
         filtered_cov np.array(n, n, K): Filter error covariance
-        predicted_states np.array(n, K): Predicted estimates for times 1,..., K
-        predicted_cov np.array(n, n, K): Filter error covariance
+        pred_states np.array(n, K): Predicted estimates for times 1,..., K
+        pred_cov np.array(n, n, K): Filter error covariance
     """
 
     K = measurements.shape[1]
@@ -31,18 +31,18 @@ def non_linear_kalman_filter(measurements, prior_mean, prior_cov, motion_model,
     # Data allocation
     filtered_states = np.zeros(n, K)
     filtered_cov = np.zeros(n, n, K)
-    predicted_states = np.zeros(n, K)
-    predicted_cov = np.zeros(n, n, K)
+    pred_states = np.zeros(n, K)
+    pred_cov = np.zeros(n, n, K)
     for k in range(K):
         meas = measurements[:, k]
         # Run filter iteration
-        (pred_mean, pred_cov) = _prediction(prior_mean, prior_cov,
-                                            motion_model, process_noise_cov)
-        (updated_mean, updated_cov) = _update(pred_mean, pred_cov, meas,
-                                              meas_model, meas_noise_cov)
+        pred_mean, pred_cov = _prediction(prior_mean, prior_cov, motion_model,
+                                          process_noise_cov)
+        updated_mean, updated_cov = _update(pred_mean, pred_cov, meas,
+                                            meas_model, meas_noise_cov)
         # Store the parameters for use in next step
-        predicted_states[:, k] = pred_mean
-        predicted_cov[:, :, k] = pred_cov
+        pred_states[:, k] = pred_mean
+        pred_cov[:, :, k] = pred_cov
         filtered_states[:, k] = updated_mean
         filtered_cov[:, :, k] = updated_cov
         prior_mean = updated_mean
@@ -63,10 +63,12 @@ def _prediction(prior_mean, prior_cov, motion_model, process_noise_cov):
        process_noise_cov np.array(n, n): Process noise covariance
 
     Returns:
-       predicted_mean np.array(n, n): predicted state mean
-       predicted_cov np.array(n, n): predicted state covariance
+       pred_mean np.array(n, n): predicted state mean
+       pred_cov np.array(n, n): predicted state covariance
     """
-    pass
+    pred_state, jacobian = motion_model(prior_mean)
+    pred_cov = jacobian @ prior_cov @ jacobian.T + process_noise_cov
+    return pred_state, pred_cov
 
 
 def _update(prior_mean, prior_cov, meas, meas_model, meas_noise_cov):
@@ -87,4 +89,9 @@ def _update(prior_mean, prior_cov, meas, meas_model, meas_noise_cov):
        updated_mean np.array(n, n): updated state mean
        updated_cov np.array(n, n): updated state covariance
     """
-    pass
+    [meas_mean, jacobian] = meas_model(prior_mean)
+    S = jacobian @ prior_cov @ jacobian.T + meas_noise_cov
+    K = prior_cov @ jacobian.T @ np.linalg.inv(S)
+    updated_mean = prior_mean + K @ (meas - meas_mean)
+    updated_cov = prior_cov - K @ S @ K.T
+    return updated_mean, updated_cov
