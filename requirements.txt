@@ -2,3 +2,5 @@ pyyaml
 requests
 beautifulsoup4
 numpy
+scipy
+matplotlib
