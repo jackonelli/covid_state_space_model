@@ -31,8 +31,7 @@ def gen_non_lin_meas(states, meas_model, R):
     """
 
     # Transpose juggling to get np to apply a function row-wise
-    meas_mean, _ = meas_model(states.T)
-    meas_mean = meas_mean.T
+    meas_mean = np.array([meas_model(state)[0] for state in states])
     num_states, meas_dim = meas_mean.shape
     noise = mvn.rvs(mean=np.zeros((meas_dim, )), cov=R, size=num_states)
     return meas_mean + noise
