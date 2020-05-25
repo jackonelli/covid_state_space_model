@@ -27,23 +27,23 @@ def main():
     x_0 = np.zeros((5, ))
     P_0 = np.diag(
         [10**2, 10**2, 10**2, (5 * np.pi / 180)**2, (1 * np.pi / 180)**2])
-    #v_scale = 0.01
-    #omega_scale = 1
-    #sigma_v = v_scale * 1
-    #sigma_omega = omega_scale * np.pi / 180
-    #Q = np.diag([
-    #    0, 0, sampling_period * sigma_v**2, 0, sampling_period * sigma_omega**2
-    #])
-    #motion_model = partial(coord_turn_motion, sampling_period=sampling_period)
+    v_scale = 0.01
+    omega_scale = 1
+    sigma_v = v_scale * 1
+    sigma_omega = omega_scale * np.pi / 180
+    Q = np.diag([
+        0, 0, sampling_period * sigma_v**2, 0, sampling_period * sigma_omega**2
+    ])
+    motion_model = partial(coord_turn_motion, sampling_period=sampling_period)
 
-    #xf, Pf, xp, Pp = non_linear_kalman_filter(measurements, x_0, P_0,
-    #                                          motion_model, Q, meas_model, R)
-    plot_(true_states, cartes_meas, None, None)
+    xf, Pf, xp, Pp = non_linear_kalman_filter(measurements, x_0, P_0,
+                                              motion_model, Q, meas_model, R)
+    plot_(true_states, cartes_meas, xf, Pf)
 
 
 def plot_(true_states, meas, filtered_mean, filtered_cov):
     plt.plot(true_states[:, 0], true_states[:, 1], "b-")
-    # plt.plot(filtered_mean[0, :], filtered_mean[1, :])
+    plt.plot(filtered_mean[:, 0], filtered_mean[:, 1])
     plt.plot(meas[:, 0], meas[:, 1], "r*")
     plt.show()
 

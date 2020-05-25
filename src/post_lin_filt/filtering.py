@@ -26,13 +26,13 @@ def non_linear_kalman_filter(measurements, prior_mean, prior_cov, motion_model,
         pred_cov np.array(): Filter error covariance
     """
 
-    K = measurements.shape[1]
+    K = measurements.shape[0]
     dim_x = prior_mean.shape[0]
     # Data allocation
     filtered_states = np.zeros((K, dim_x))
     filtered_cov = np.zeros((K, dim_x, dim_x))
     pred_states = np.zeros((K, dim_x))
-    pred_cov = np.zeros((K, dim_x, dim_x))
+    pred_covs = np.zeros((K, dim_x, dim_x))
     for k in range(K):
         meas = measurements[k, :]
         # Run filter iteration
@@ -41,13 +41,13 @@ def non_linear_kalman_filter(measurements, prior_mean, prior_cov, motion_model,
         updated_mean, updated_cov = _update(pred_mean, pred_cov, meas,
                                             meas_model, meas_noise_cov)
         # Store the parameters for use in next step
-        pred_states[:, k] = pred_mean
-        pred_cov[:, :, k] = pred_cov
-        filtered_states[:, k] = updated_mean
-        filtered_cov[:, :, k] = updated_cov
+        pred_states[k, :] = pred_mean
+        pred_covs[k, :, :] = pred_cov
+        filtered_states[k, :] = updated_mean
+        filtered_cov[k, :, :] = updated_cov
         prior_mean = updated_mean
         prior_cov = updated_cov
-    return filtered_states, filtered_cov, pred_states, pred_cov
+    return filtered_states, filtered_cov, pred_states, pred_covs
 
 
 def _prediction(prior_mean, prior_cov, motion_model, process_noise_cov):
@@ -91,9 +91,7 @@ def _update(prior_mean, prior_cov, meas, meas_model, meas_noise_cov):
        updated_cov np.array(D_x, D_x): updated state covariance
     """
     [meas_mean, jacobian] = meas_model(prior_mean)
-    print("meas_mean", meas_mean)
     S = jacobian @ prior_cov @ jacobian.T + meas_noise_cov
-    print("S", S)
     K = prior_cov @ jacobian.T @ np.linalg.inv(S)
     updated_mean = prior_mean + K @ (meas - meas_mean)
     updated_cov = prior_cov - K @ S @ K.T
