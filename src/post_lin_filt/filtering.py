@@ -7,7 +7,7 @@ def non_linear_kalman_filter(measurements, prior_mean, prior_cov, motion_model,
     """Non-linear Kalman filter
     Filters a measurement sequence using a non-linear Kalman filter.
     Args:
-        measurements np.array(d, K): Measurement sequence for times 1,..., K
+        measurements np.array(K, D_y): Measurement sequence for times 1,..., K
         prior_mean np.array(D_x,): Prior mean for time 0
         prior_cov np.array(D_x, D_x): Prior covariance
         motion_model: Motion model function handle
@@ -20,21 +20,21 @@ def non_linear_kalman_filter(measurements, prior_mean, prior_cov, motion_model,
         meas_noise_cov np.array(D_y, D_y): Measurement noise covariance
 
     Returns:
-        filtered_mean np.array(D_x, K): Filtered estimates for times 1,..., K
-        filtered_cov np.array(D_x, D_x, K): Filter error covariance
-        pred_states np.array(D_x, K): Predicted estimates for times 1,..., K
-        pred_cov np.array(D_x, D_x, K): Filter error covariance
+        filtered_mean np.array(): Filtered estimates for times 1,..., K
+        filtered_cov np.array(): Filter error covariance
+        pred_states np.array(): Predicted estimates for times 1,..., K
+        pred_cov np.array(): Filter error covariance
     """
 
     K = measurements.shape[1]
     dim_x = prior_mean.shape[0]
     # Data allocation
-    filtered_states = np.zeros((dim_x, K))
-    filtered_cov = np.zeros((dim_x, dim_x, K))
-    pred_states = np.zeros((dim_x, K))
-    pred_cov = np.zeros((dim_x, dim_x, K))
+    filtered_states = np.zeros((K, dim_x))
+    filtered_cov = np.zeros((K, dim_x, dim_x))
+    pred_states = np.zeros((K, dim_x))
+    pred_cov = np.zeros((K, dim_x, dim_x))
     for k in range(K):
-        meas = measurements[:, k]
+        meas = measurements[k, :]
         # Run filter iteration
         pred_mean, pred_cov = _prediction(prior_mean, prior_cov, motion_model,
                                           process_noise_cov)
@@ -91,6 +91,7 @@ def _update(prior_mean, prior_cov, meas, meas_model, meas_noise_cov):
        updated_cov np.array(D_x, D_x): updated state covariance
     """
     [meas_mean, jacobian] = meas_model(prior_mean)
+    print("meas_mean", meas_mean)
     S = jacobian @ prior_cov @ jacobian.T + meas_noise_cov
     print("S", S)
     K = prior_cov @ jacobian.T @ np.linalg.inv(S)
