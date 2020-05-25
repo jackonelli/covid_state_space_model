@@ -22,9 +22,8 @@ def main():
                                                R)
     cartes_meas = np.array(
         [to_cartesian_coords(meas, pos) for meas in measurements])
-    print(cartes_meas.shape)
-    print(true_states.shape)
-
+    cartes_meas = np.apply_along_axis(partial(to_cartesian_coords, pos=pos), 1,
+                                      measurements)
     x_0 = np.zeros((5, ))
     P_0 = np.diag(
         [10**2, 10**2, 10**2, (5 * np.pi / 180)**2, (1 * np.pi / 180)**2])
@@ -76,8 +75,8 @@ def gen_non_lin_meas(states, meas_model, R):
         R np.array((D_y, D_y))
     """
 
-    # Transpose juggling to get np to apply a function row-wise
-    meas_mean = np.array([meas_model(state)[0] for state in states])
+    meas_mean = np.apply_along_axis(lambda state: meas_model(state)[0], 1,
+                                    states)
     num_states, meas_dim = meas_mean.shape
     noise = mvn.rvs(mean=np.zeros((meas_dim, )), cov=R, size=num_states)
     return meas_mean + noise
