@@ -1,0 +1,1 @@
+"""Stochastic linear regression (SLR)"""

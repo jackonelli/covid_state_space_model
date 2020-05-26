@@ -4,6 +4,7 @@ import numpy as np
 from scipy.stats import multivariate_normal as mvn
 import matplotlib.pyplot as plt
 from post_lin_filt.filtering import non_linear_kalman_filter
+from post_lin_filt.smoothing import rts_smoothing
 from post_lin_filt.meas_models.range_bearing import range_bearing_meas, to_cartesian_coords
 from post_lin_filt.motion_models.coord_turn import coord_turn_motion
 from post_lin_filt.utils import gen_dummy_data, gen_non_lin_meas
@@ -38,7 +39,8 @@ def main():
 
     xf, Pf, xp, Pp = non_linear_kalman_filter(measurements, x_0, P_0,
                                               motion_model, Q, meas_model, R)
-    plot_(true_states, cartes_meas, xf, Pf)
+    xs, Ps = rts_smoothing(xf, Pf, xp, Pp, motion_model)
+    plot_(true_states, cartes_meas, xs, Ps)
 
 
 def plot_(true_states, meas, filtered_mean, filtered_cov):
