@@ -2,7 +2,6 @@ import unittest
 from functools import partial
 import numpy as np
 from post_lin_filt.meas_models.range_bearing import range_bearing_meas
-from post_lin_filt.utils import gen_dummy_data
 
 
 class TestRangeBearing(unittest.TestCase):
