@@ -5,7 +5,7 @@ import numpy as np
 
 class MeasModel(ABC):
     @abstractmethod
-    def predict(self, current_state):
+    def update(self, current_state):
         """Return mean and jacobian of the measurement
         evaluated at the current state
         """

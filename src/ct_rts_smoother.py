@@ -64,7 +64,7 @@ def gen_dummy_data(num_samples, sampling_period, meas_model, R):
     coord_turn = CoordTurn(sampling_period)
     # Create true track
     for k in range(1, num_samples + 1):
-        new_state, _ = coord_turn.predict(true_states[k - 1, :])
+        new_state, _ = coord_turn.mean_and_cov(true_states[k - 1, :])
         true_states[k, :] = new_state
         true_states[k, 4] = omega[k]
 
@@ -80,8 +80,8 @@ def gen_non_lin_meas(states, meas_model, R):
         R np.array((D_y, D_y))
     """
 
-    meas_mean = np.apply_along_axis(lambda state: meas_model.predict(state)[0],
-                                    1, states)
+    meas_mean = np.apply_along_axis(
+        lambda state: meas_model.mean_and_jacobian(state)[0], 1, states)
     num_states, meas_dim = meas_mean.shape
     noise = mvn.rvs(mean=np.zeros((meas_dim, )), cov=R, size=num_states)
     return meas_mean + noise

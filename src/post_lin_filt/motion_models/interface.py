@@ -5,6 +5,6 @@ import numpy as np
 
 class MotionModel(ABC):
     @abstractmethod
-    def predict(self, current_state):
-        """Return mean and jacobian evaluated at the current state"""
+    def predict(self, prior_mean, prior_cov, process_noise_covcurrent_state):
+        """Predict next mean and covariance given the current mean and cov"""
         pass

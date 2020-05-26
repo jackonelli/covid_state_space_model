@@ -39,10 +39,10 @@ def non_linear_kalman_filter(measurements, prior_mean, prior_cov,
     for k in range(K):
         meas = measurements[k, :]
         # Run filter iteration
-        pred_mean, pred_cov = _prediction(prior_mean, prior_cov, motion_model,
-                                          process_noise_cov)
-        updated_mean, updated_cov = _update(pred_mean, pred_cov, meas,
-                                            meas_model, meas_noise_cov)
+        pred_mean, pred_cov = motion_model.predict(prior_mean, prior_cov,
+                                                   process_noise_cov)
+        updated_mean, updated_cov = meas_model.update(pred_mean, pred_cov,
+                                                      meas, meas_noise_cov)
         # Store the parameters for use in next step
         pred_states[k, :] = pred_mean
         pred_covs[k, :, :] = pred_cov
