@@ -44,7 +44,8 @@ class _FhmDistr(Conditional):
         i_u_new = i_u + delta_i_u - delta_r_u
         i_r_new = i_r + delta_i_r - delta_r_r
         r_new = r + delta_r_u + delta_r_r
-        return structure_state(s_new, e_new, i_u_new, i_r_new, r_new)
+        return normalize_state(
+            structure_state(s_new, e_new, i_u_new, i_r_new, r_new))
 
     def _delta_e(self, s, i_u, i_r):
         unrep_interactions = int(s) * int(i_u)
@@ -64,6 +65,10 @@ class _FhmDistr(Conditional):
 
     def _delta_r_r(self, i_r):
         return binom.rvs(i_r, self.p_er)
+
+
+def normalize_state(state):
+    return state / state.sum()
 
 
 def structure_state(s, e, i_u, i_r, r):

@@ -62,7 +62,7 @@ def _rts_update(xs_kplus1, Ps_kplus1, xf_k, Pf_k, xp_kplus1, Pp_kplus1,
        pred_mean np.array(D_x, D_x): predicted state mean
        pred_cov np.array(D_x, D_x): predicted state covariance
     """
-    _, jacobian = motion_model.mean_and_cov(xf_k)
+    _, jacobian = motion_model.mean_and_jacobian(xf_k)
     P_kkplus1 = Pf_k @ jacobian.T
 
     G_k = P_kkplus1 @ np.linalg.inv(Pp_kplus1)

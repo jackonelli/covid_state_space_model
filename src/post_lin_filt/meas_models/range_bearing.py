@@ -8,14 +8,6 @@ class RangeBearing:
     def __init__(self, pos):
         self.pos = pos
 
-    def update(self, prior_mean, prior_cov, meas, meas_noise_cov):
-        [meas_mean, jacobian] = self.mean_and_jacobian(prior_mean)
-        S = jacobian @ prior_cov @ jacobian.T + meas_noise_cov
-        K = prior_cov @ jacobian.T @ np.linalg.inv(S)
-        updated_mean = prior_mean + K @ (meas - meas_mean)
-        updated_cov = prior_cov - K @ S @ K.T
-        return updated_mean, updated_cov
-
     def mean_and_jacobian(self, state):
         """Range bearing measurement
 

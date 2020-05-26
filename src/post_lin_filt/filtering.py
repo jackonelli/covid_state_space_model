@@ -1,12 +1,13 @@
 """Kalman filter (KF)"""
 import numpy as np
+from post_lin_filt.filter_type.interface import FilterType
 from post_lin_filt.motion_models.interface import MotionModel
 from post_lin_filt.meas_models.interface import MeasModel
 
 
-def non_linear_kalman_filter(measurements, prior_mean, prior_cov,
-                             motion_model: MotionModel, process_noise_cov,
-                             meas_model, meas_noise_cov):
+def non_linear_kalman_filter(filter_type: FilterType, measurements, prior_mean,
+                             prior_cov, motion_model: MotionModel,
+                             process_noise_cov, meas_model, meas_noise_cov):
     """Non-linear Kalman filter
     Filters a measurement sequence using a non-linear Kalman filter.
     Args:
@@ -39,10 +40,12 @@ def non_linear_kalman_filter(measurements, prior_mean, prior_cov,
     for k in range(K):
         meas = measurements[k, :]
         # Run filter iteration
-        pred_mean, pred_cov = motion_model.predict(prior_mean, prior_cov,
-                                                   process_noise_cov)
-        updated_mean, updated_cov = meas_model.update(pred_mean, pred_cov,
-                                                      meas, meas_noise_cov)
+        pred_mean, pred_cov = filter_type.predict(prior_mean, prior_cov,
+                                                  motion_model,
+                                                  process_noise_cov)
+        updated_mean, updated_cov = filter_type.update(pred_mean, pred_cov,
+                                                       meas, meas_model,
+                                                       meas_noise_cov)
         # Store the parameters for use in next step
         pred_states[k, :] = pred_mean
         pred_covs[k, :, :] = pred_cov

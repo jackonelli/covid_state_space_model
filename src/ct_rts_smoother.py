@@ -4,6 +4,7 @@ import numpy as np
 from scipy.stats import multivariate_normal as mvn
 import matplotlib.pyplot as plt
 from post_lin_filt.filtering import non_linear_kalman_filter
+from post_lin_filt.filter_type.ekf import Ekf
 from post_lin_filt.smoothing import rts_smoothing
 from post_lin_filt.meas_models.range_bearing import RangeBearing, to_cartesian_coords
 from post_lin_filt.motion_models.coord_turn import CoordTurn
@@ -36,12 +37,9 @@ def main():
     ])
     motion_model = CoordTurn(sampling_period=sampling_period)
 
-    xf, Pf, xp, Pp = non_linear_kalman_filter(measurements, x_0, P_0,
+    xf, Pf, xp, Pp = non_linear_kalman_filter(Ekf(), measurements, x_0, P_0,
                                               motion_model, Q, meas_model, R)
     xs, Ps = rts_smoothing(xf, Pf, xp, Pp, motion_model)
-    print(xs.shape)
-    for k in range(K - 10, K):
-        print(xs[k, :2])
     plot_(true_states, cartes_meas, xs, Ps)
     # plot_(true_states, cartes_meas, xs[-10:, :], Ps)
 
@@ -64,7 +62,7 @@ def gen_dummy_data(num_samples, sampling_period, meas_model, R):
     coord_turn = CoordTurn(sampling_period)
     # Create true track
     for k in range(1, num_samples + 1):
-        new_state, _ = coord_turn.mean_and_cov(true_states[k - 1, :])
+        new_state, _ = coord_turn.mean_and_jacobian(true_states[k - 1, :])
         true_states[k, :] = new_state
         true_states[k, 4] = omega[k]
 

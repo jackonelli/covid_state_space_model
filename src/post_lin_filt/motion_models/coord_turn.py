@@ -6,12 +6,7 @@ class CoordTurn(MotionModel):
     def __init__(self, sampling_period):
         self.sampling_period = sampling_period
 
-    def predict(self, prior_mean, prior_cov, process_noise_cov):
-        pred_mean, jacobian = self.mean_and_cov(prior_mean)
-        pred_cov = jacobian @ prior_cov @ jacobian.T + process_noise_cov
-        return pred_mean, pred_cov
-
-    def mean_and_cov(self, state):
+    def mean_and_jacobian(self, state):
         v = state[2]
         phi = state[3]
         omega = state[4]

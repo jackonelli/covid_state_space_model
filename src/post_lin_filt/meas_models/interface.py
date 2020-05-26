@@ -19,7 +19,7 @@ class MeasModel(ABC):
        updated_cov np.array(D_x, D_x): updated state covariance
     """
     @abstractmethod
-    def update(self, current_state):
+    def mean_and_jacobian(self, current_state):
         """Return mean and jacobian of the measurement
         evaluated at the current state
         """

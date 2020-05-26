@@ -21,6 +21,7 @@ class MotionModel(ABC):
        pred_cov np.array(D_x, D_x): predicted state covariance
     """
     @abstractmethod
-    def predict(self, prior_mean, prior_cov, process_noise_covcurrent_state):
+    def mean_and_jacobian(self, prior_mean, prior_cov,
+                          process_noise_covcurrent_state):
         """Predict next mean and covariance given the current mean and cov"""
         pass
