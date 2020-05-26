@@ -7,7 +7,6 @@ from post_lin_filt.filtering import non_linear_kalman_filter
 from post_lin_filt.smoothing import rts_smoothing
 from post_lin_filt.meas_models.range_bearing import range_bearing_meas, to_cartesian_coords
 from post_lin_filt.motion_models.coord_turn import coord_turn_motion
-from post_lin_filt.utils import gen_dummy_data, gen_non_lin_meas
 
 
 def main():
@@ -40,7 +39,11 @@ def main():
     xf, Pf, xp, Pp = non_linear_kalman_filter(measurements, x_0, P_0,
                                               motion_model, Q, meas_model, R)
     xs, Ps = rts_smoothing(xf, Pf, xp, Pp, motion_model)
+    print(xs.shape)
+    for k in range(K - 10, K):
+        print(xs[k, :2])
     plot_(true_states, cartes_meas, xs, Ps)
+    # plot_(true_states, cartes_meas, xs[-10:, :], Ps)
 
 
 def plot_(true_states, meas, filtered_mean, filtered_cov):

@@ -1,7 +1,5 @@
 """Range-bearing measurement model"""
-from functools import partial
 import numpy as np
-from post_lin_filt.utils import gen_dummy_data
 
 
 def range_bearing_meas(state, pos):

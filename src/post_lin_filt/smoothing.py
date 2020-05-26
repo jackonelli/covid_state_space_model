@@ -21,14 +21,17 @@ def rts_smoothing(filtered_means, filtered_covs, pred_means, pred_covs,
         smooth_covs np.array(): Smooth error covariance
     """
 
-    K = filtered_means.shape[0]
+    K_plus_1, dim_x = filtered_means.shape
+    K = K_plus_1 - 1
 
     # Allocation
-    smooth_means = np.zeros(filtered_means.shape)
-    smooth_covs = np.zeros(filtered_covs.shape)
+    smooth_means = np.zeros((K, dim_x))
+    smooth_covs = np.zeros((K, dim_x, dim_x))
     smooth_mean = filtered_means[K - 1, :]
     smooth_cov = filtered_covs[K - 1, :, :]
-    for k in np.flip(np.arange(K - 2)):
+    smooth_means[-1, :] = smooth_mean
+    smooth_covs[-1, :, :] = smooth_cov
+    for k in np.flip(np.arange(K)):
         # Run filter iteration
         smooth_mean, smooth_cov = _rts_update(smooth_mean, smooth_cov,
                                               filtered_means[k, :],
@@ -59,10 +62,10 @@ def _rts_update(xs_kplus1, Ps_kplus1, xf_k, Pf_k, xp_kplus1, Pp_kplus1,
        pred_cov np.array(D_x, D_x): predicted state covariance
     """
     _, jacobian = motion_model(xf_k)
-    P_kkplus1 = Pf_k * jacobian.T
+    P_kkplus1 = Pf_k @ jacobian.T
 
-    G_k = P_kkplus1 * np.linalg.inv(Pp_kplus1)
+    G_k = P_kkplus1 @ np.linalg.inv(Pp_kplus1)
     xs_k = xf_k + G_k @ (xs_kplus1 - xp_kplus1)
     # TODO Check order in Pp Ps
-    Ps_k = Pf_k - G_k @ (Ps_kplus1 - Pp_kplus1) * G_k.T
+    Ps_k = Pf_k - G_k @ (Ps_kplus1 - Pp_kplus1) @ G_k.T
     return xs_k, Ps_k
