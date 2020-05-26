@@ -1,5 +1,6 @@
 """Rauch-Tung-Striebel (RTS) smoothing"""
 import numpy as np
+from post_lin_filt.motion_models.interface import MotionModel
 
 
 def rts_smoothing(filtered_means, filtered_covs, pred_means, pred_covs,
@@ -45,7 +46,7 @@ def rts_smoothing(filtered_means, filtered_covs, pred_means, pred_covs,
 
 
 def _rts_update(xs_kplus1, Ps_kplus1, xf_k, Pf_k, xp_kplus1, Pp_kplus1,
-                motion_model):
+                motion_model: MotionModel):
     """Non-linear Kalman filter prediction
     calculates mean and covariance of predicted state density
     using a non-linear Gaussian model.
@@ -61,7 +62,7 @@ def _rts_update(xs_kplus1, Ps_kplus1, xf_k, Pf_k, xp_kplus1, Pp_kplus1,
        pred_mean np.array(D_x, D_x): predicted state mean
        pred_cov np.array(D_x, D_x): predicted state covariance
     """
-    _, jacobian = motion_model(xf_k)
+    _, jacobian = motion_model.predict(xf_k)
     P_kkplus1 = Pf_k @ jacobian.T
 
     G_k = P_kkplus1 @ np.linalg.inv(Pp_kplus1)

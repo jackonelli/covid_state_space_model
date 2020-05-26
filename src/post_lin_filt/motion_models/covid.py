@@ -2,9 +2,8 @@ from post_lin_filt.motion_models.interface import MotionModel
 import numpy as np
 
 
-class CoordTurn(MotionModel):
-    def __init__(self, sampling_period):
-        self.sampling_period = sampling_period
+class Covid(MotionModel):
+    def __init__(self):
 
     def predict(self, state):
         v = state[2]

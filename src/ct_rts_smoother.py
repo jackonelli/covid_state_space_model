@@ -5,8 +5,8 @@ from scipy.stats import multivariate_normal as mvn
 import matplotlib.pyplot as plt
 from post_lin_filt.filtering import non_linear_kalman_filter
 from post_lin_filt.smoothing import rts_smoothing
-from post_lin_filt.meas_models.range_bearing import range_bearing_meas, to_cartesian_coords
-from post_lin_filt.motion_models.coord_turn import coord_turn_motion
+from post_lin_filt.meas_models.range_bearing import RangeBearing, to_cartesian_coords
+from post_lin_filt.motion_models.coord_turn import CoordTurn
 
 
 def main():
@@ -17,7 +17,7 @@ def main():
     sigma_phi = 4 * np.pi / 180
 
     R = np.diag([sigma_r**2, sigma_phi**2])
-    meas_model = partial(range_bearing_meas, pos=pos)
+    meas_model = RangeBearing(pos)
     true_states, measurements = gen_dummy_data(K, sampling_period, meas_model,
                                                R)
     cartes_meas = np.array(
@@ -34,7 +34,7 @@ def main():
     Q = np.diag([
         0, 0, sampling_period * sigma_v**2, 0, sampling_period * sigma_omega**2
     ])
-    motion_model = partial(coord_turn_motion, sampling_period=sampling_period)
+    motion_model = CoordTurn(sampling_period=sampling_period)
 
     xf, Pf, xp, Pp = non_linear_kalman_filter(measurements, x_0, P_0,
                                               motion_model, Q, meas_model, R)
@@ -61,10 +61,10 @@ def gen_dummy_data(num_samples, sampling_period, meas_model, R):
     # Allocate memory
     true_states = np.zeros((num_samples + 1, initial_state.shape[0]))
     true_states[0, :] = initial_state
+    coord_turn = CoordTurn(sampling_period)
     # Create true track
     for k in range(1, num_samples + 1):
-        new_state, _ = coord_turn_motion(true_states[k - 1, :],
-                                         sampling_period)
+        new_state, _ = coord_turn.predict(true_states[k - 1, :])
         true_states[k, :] = new_state
         true_states[k, 4] = omega[k]
 
@@ -80,8 +80,8 @@ def gen_non_lin_meas(states, meas_model, R):
         R np.array((D_y, D_y))
     """
 
-    meas_mean = np.apply_along_axis(lambda state: meas_model(state)[0], 1,
-                                    states)
+    meas_mean = np.apply_along_axis(lambda state: meas_model.predict(state)[0],
+                                    1, states)
     num_states, meas_dim = meas_mean.shape
     noise = mvn.rvs(mean=np.zeros((meas_dim, )), cov=R, size=num_states)
     return meas_mean + noise
