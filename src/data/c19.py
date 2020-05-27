@@ -31,6 +31,15 @@ class C19Data:
         self.in_icu = in_icu
         self.in_hospital = in_hospital
 
+    @staticmethod
+    def from_json_file(data_path: Path) -> "C19Data":
+        """Load data from json file"""
+        with open(data_path) as json_file:
+            raw_data = json.load(json_file)
+        return C19Data(raw_data["cases"], raw_data["daily_cases"],
+                       raw_data["deceased"], raw_data["daily_deceased"],
+                       raw_data["in_icu"], raw_data["in_hospital"])
+
     def _to_list(self):
         return [
             self.cases, self.daily_cases, self.deceased, self.daily_deceased,
