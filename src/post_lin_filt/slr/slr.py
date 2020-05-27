@@ -3,14 +3,14 @@ import numpy as np
 from post_lin_filt.slr.distribution import Gaussian, Conditional
 
 
-class SLR:
+class Slr:
     """SLR"""
     def __init__(self, p_x: Gaussian, p_z_given_x: Conditional):
         self.p_x = p_x
         self.p_z_given_x = p_z_given_x
 
-    def sample(self, num_samples):
-        x_sample = self.p_x.sample(num_samples)
+    def sample(self, p_x: Gaussian, num_samples: int):
+        x_sample = p_x.sample(num_samples)
         z_sample = self.p_z_given_x.sample(x_sample, num_samples)
         return (x_sample, z_sample)
 
@@ -28,7 +28,7 @@ class SLR:
 
     def linear_parameters(self, num_samples):
         """Estimate linear paramters"""
-        x_sample, z_sample = self.sample(num_samples)
+        x_sample, z_sample = self.sample(self.p_x, num_samples)
         z_bar = self._z_bar(z_sample)
         psi = self._psi(x_sample, z_sample)
         phi = self._phi(z_sample)
