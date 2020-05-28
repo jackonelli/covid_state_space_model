@@ -10,7 +10,8 @@ class Gaussian:
         self.P = P
 
     def sample(self, num_samples):
-        mvn.rvs(mean=self.x_bar, cov=self.P, size=num_samples)
+        print(self.x_bar.shape)
+        return mvn.rvs(mean=self.x_bar, cov=self.P, size=num_samples)
 
 
 class Conditional(ABC):

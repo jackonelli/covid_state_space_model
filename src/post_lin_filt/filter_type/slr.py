@@ -18,17 +18,20 @@ class SlrFilter(FilterType):
 
     def predict(self, prior_mean, prior_cov):
         slr = Slr(Gaussian(x_bar=prior_mean, P=prior_cov), self.motion_model)
-        A, b, Q = slr.linear_parameters(prior_mean, prior_cov,
-                                        self.num_samples)
+        A, b, Q = slr.linear_parameters(self.num_samples)
         pred_mean = A @ prior_mean + b
         pred_cov = A @ prior_cov @ A.T + Q
         return pred_mean, pred_cov
 
     def update(self, prior_mean, prior_cov, meas):
+        print("Update")
         slr = Slr(Gaussian(x_bar=prior_mean, P=prior_cov), self.meas_model)
         H, c, R = slr.linear_parameters(self.num_samples)
         meas_mean = H @ prior_mean + c
+        print("prior", prior_mean)
+        print("H", H)
         S = H @ prior_cov @ H.T + R
+        print("S", S)
         K = prior_cov @ H.T @ np.linalg.inv(S)
         updated_mean = prior_mean + K @ (meas - meas_mean)
         updated_cov = prior_cov - K @ S @ K.T
