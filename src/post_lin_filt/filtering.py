@@ -1,7 +1,7 @@
 """Kalman filter (KF)"""
 import numpy as np
-from post_lin_filt.slr.distributions import Conditional
-from post_lin_filt.deprecated.filter_type.slr import SlrFilter
+from post_lin_filt.slr.distributions import Gaussian, Conditional
+from post_lin_filt.slr.slr import Slr
 
 
 def slr_kalman_filter(measurements, prior_mean, prior_cov,
@@ -36,15 +36,16 @@ def slr_kalman_filter(measurements, prior_mean, prior_cov,
     filtered_cov = np.zeros((K, dim_x, dim_x))
     pred_states = np.zeros((K, dim_x))
     pred_covs = np.zeros((K, dim_x, dim_x))
-    filter_ = SlrFilter(motion_model, meas_model, num_samples)
     print("P_0", prior_cov.shape)
     for k in range(K):
         print("time step:", k)
         meas = measurements[k, :]
         # Run filter iteration
-        pred_mean, pred_cov = filter_.predict(prior_mean, prior_cov)
+        pred_mean, pred_cov = predict(prior_mean, prior_cov, motion_model,
+                                      num_samples)
 
-        updated_mean, updated_cov = filter_.update(pred_mean, pred_cov, meas)
+        updated_mean, updated_cov = update(meas, pred_mean, pred_cov,
+                                           meas_model, num_samples)
         # Store the parameters for use in next step
         pred_states[k, :] = pred_mean
         pred_covs[k, :, :] = pred_cov
@@ -55,7 +56,31 @@ def slr_kalman_filter(measurements, prior_mean, prior_cov,
     return filtered_states, filtered_cov, pred_states, pred_covs
 
 
-from post_lin_filt.deprecated.filter_type.slr import SlrFilter
+def predict(prior_mean, prior_cov, motion_model: Conditional,
+            num_samples: int):
+    slr = Slr(Gaussian(x_bar=prior_mean, P=prior_cov), motion_model)
+    A, b, Q = slr.linear_parameters(num_samples)
+    pred_mean = A @ prior_mean + b
+    pred_cov = A @ prior_cov @ A.T + Q
+    return pred_mean, pred_cov
+
+
+def update(meas, prior_mean, prior_cov, meas_model: Conditional,
+           num_samples: int):
+    print("Update")
+    slr = Slr(Gaussian(x_bar=prior_mean, P=prior_cov), meas_model)
+    H, c, R = slr.linear_parameters(num_samples)
+    meas_mean = H @ prior_mean + c
+    print("prior", prior_mean)
+    print("H", H)
+    S = H @ prior_cov @ H.T + R
+    print("S", S)
+    K = prior_cov @ H.T @ np.linalg.inv(S)
+    updated_mean = prior_mean + K @ (meas - meas_mean)
+    updated_cov = prior_cov - K @ S @ K.T
+    return updated_mean, updated_cov
+
+
 from post_lin_filt.deprecated.filter_type.interface import FilterType
 from post_lin_filt.deprecated.motion_models.interface import MotionModel
 from post_lin_filt.deprecated.meas_models.interface import MeasModel

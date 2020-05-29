@@ -4,14 +4,14 @@ import numpy as np
 from scipy.stats import multivariate_normal as mvn
 import matplotlib.pyplot as plt
 from post_lin_filt.filtering import slr_kalman_filter
-from post_lin_filt.meas_models.range_bearing import to_cartesian_coords
+from post_lin_filt.slr.conditionals.range_bearing import to_cartesian_coords
 from post_lin_filt.slr.conditionals.coord_turn import CoordTurn
 from post_lin_filt.slr.conditionals.range_bearing import RangeBearing
 
 
 def main():
     K = 600
-    num_samples = 10
+    num_samples = 100
     sampling_period = 0.1
     v_scale = 0.01
     omega_scale = 1

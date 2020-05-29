@@ -33,6 +33,7 @@ class Slr:
     def linear_parameters(self, num_samples):
         """Estimate linear paramters"""
         x_sample, z_sample = self.sample(num_samples)
+        plot_state(x_sample)
         z_bar = self._z_bar(z_sample)
         psi = self._psi(x_sample, z_sample, z_bar)
         phi = self._phi(z_sample, z_bar)
@@ -41,6 +42,16 @@ class Slr:
         b = z_bar - A @ _bar(x_sample)
         Sigma = phi - A @ self.p_x.P @ A.T
         return A, b, Sigma
+
+
+import matplotlib.pyplot as plt
+import time
+
+
+def plot_state(states):
+    plt.plot(states[:, 0], states[:, 1], "r*")
+    plt.show()
+    time.sleep(1)
 
 
 def _bar(sample):
