@@ -1,4 +1,4 @@
-from post_lin_filt.motion_models.interface import MotionModel
+from post_lin_filt.deprecated.motion_models.interface import MotionModel
 import numpy as np
 
 

@@ -1,8 +1,8 @@
 """EKF filter type"""
 import numpy as np
-from post_lin_filt.filter_type.interface import FilterType
-from post_lin_filt.motion_models.interface import MotionModel
-from post_lin_filt.meas_models.interface import MeasModel
+from post_lin_filt.deprecated.filter_type.interface import FilterType
+from post_lin_filt.deprecated.motion_models.interface import MotionModel
+from post_lin_filt.deprecated.meas_models.interface import MeasModel
 
 
 class Ekf(FilterType):

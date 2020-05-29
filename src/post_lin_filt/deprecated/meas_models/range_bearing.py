@@ -1,6 +1,6 @@
 """Range-bearing measurement model"""
 import numpy as np
-from post_lin_filt.meas_models.interface import MeasModel
+from post_lin_filt.deprecated.meas_models.interface import MeasModel
 
 
 class RangeBearing:

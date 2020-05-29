@@ -1,6 +1,6 @@
 """Rauch-Tung-Striebel (RTS) smoothing"""
 import numpy as np
-from post_lin_filt.motion_models.interface import MotionModel
+from post_lin_filt.deprecated.motion_models.interface import MotionModel
 
 
 def rts_smoothing(filtered_means, filtered_covs, pred_means, pred_covs,

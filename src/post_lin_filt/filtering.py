@@ -1,7 +1,7 @@
 """Kalman filter (KF)"""
 import numpy as np
 from post_lin_filt.slr.distributions import Conditional
-from post_lin_filt.filter_type.slr import SlrFilter
+from post_lin_filt.deprecated.filter_type.slr import SlrFilter
 
 
 def slr_kalman_filter(measurements, prior_mean, prior_cov,
@@ -55,9 +55,10 @@ def slr_kalman_filter(measurements, prior_mean, prior_cov,
     return filtered_states, filtered_cov, pred_states, pred_covs
 
 
-from post_lin_filt.filter_type.interface import FilterType
-from post_lin_filt.motion_models.interface import MotionModel
-from post_lin_filt.meas_models.interface import MeasModel
+from post_lin_filt.deprecated.filter_type.slr import SlrFilter
+from post_lin_filt.deprecated.filter_type.interface import FilterType
+from post_lin_filt.deprecated.motion_models.interface import MotionModel
+from post_lin_filt.deprecated.meas_models.interface import MeasModel
 
 
 def non_linear_kalman_filter(filter_type: FilterType, measurements, prior_mean,
