@@ -6,13 +6,12 @@ import matplotlib.pyplot as plt
 from post_lin_filt.filtering import non_linear_kalman_filter
 from post_lin_filt.filter_type.ekf import Ekf
 from post_lin_filt.smoothing import rts_smoothing
-from post_lin_filt.slr.conditionals.range_bearing import RangeBearing, to_cartesian_coords
+from post_lin_filt.meas_models.range_bearing import RangeBearing, to_cartesian_coords
 from post_lin_filt.motion_models.coord_turn import CoordTurn
 
 
 def main():
     K = 600
-    num_samples = 10
     sampling_period = 0.1
     pos = np.array([280, -140])
     sigma_r = 15
@@ -40,8 +39,8 @@ def main():
 
     xf, Pf, xp, Pp = non_linear_kalman_filter(Ekf(), measurements, x_0, P_0,
                                               motion_model, Q, meas_model, R)
-    #xs, Ps = rts_smoothing(xf, Pf, xp, Pp, motion_model)
-    plot_(true_states, cartes_meas, xf, Pf)
+    xs, Ps = rts_smoothing(xf, Pf, xp, Pp, motion_model)
+    plot_(true_states, cartes_meas, xs, Ps)
     # plot_(true_states, cartes_meas, xs[-10:, :], Ps)
 
 
