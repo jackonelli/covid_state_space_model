@@ -11,6 +11,7 @@ class Slr:
 
     def sample(self, num_samples: int):
         x_sample = self.p_x.sample(num_samples)
+        print("x_sample", x_sample.shape)
         z_sample = self.p_z_given_x.sample(x_sample)
         return (x_sample, z_sample)
 

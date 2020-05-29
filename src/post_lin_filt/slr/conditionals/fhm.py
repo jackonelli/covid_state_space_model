@@ -11,10 +11,10 @@ The state is:
     ]
 """
 from dataclasses import dataclass
-from post_lin_filt.motion_models.interface import MotionModel
-from post_lin_filt.slr.distributions import Gaussian, Conditional
 import numpy as np
 from scipy.stats import binom
+from post_lin_filt.motion_models.interface import MotionModel
+from post_lin_filt.slr.distributions import Conditional
 
 
 @dataclass
@@ -34,7 +34,6 @@ class Motion(Conditional):
         self.population_size = int(population_size)
 
     def sample(self, states):
-        print("motion states", states)
         s, e, i_u, i_r, r = destructure_state(
             denormalize_state(states, self.population_size))
         delta_e = self._delta_e(s, i_u, i_r)

@@ -3,23 +3,31 @@ from functools import partial
 import numpy as np
 from scipy.stats import multivariate_normal as mvn
 import matplotlib.pyplot as plt
-from post_lin_filt.filtering import non_linear_kalman_filter
-from post_lin_filt.filter_type.ekf import Ekf
-from post_lin_filt.smoothing import rts_smoothing
-from post_lin_filt.slr.conditionals.range_bearing import RangeBearing, to_cartesian_coords
-from post_lin_filt.motion_models.coord_turn import CoordTurn
+from post_lin_filt.filtering import slr_kalman_filter
+from post_lin_filt.meas_models.range_bearing import to_cartesian_coords
+from post_lin_filt.slr.conditionals.coord_turn import CoordTurn
+from post_lin_filt.slr.conditionals.range_bearing import RangeBearing
 
 
 def main():
     K = 600
     num_samples = 10
     sampling_period = 0.1
+    v_scale = 0.01
+    omega_scale = 1
+    sigma_v = v_scale * 1
+    sigma_omega = omega_scale * np.pi / 180
+    Q = np.diag([
+        0, 0, sampling_period * sigma_v**2, 0, sampling_period * sigma_omega**2
+    ])
+    motion_model = CoordTurn(sampling_period, Q)
+
     pos = np.array([280, -140])
     sigma_r = 15
     sigma_phi = 4 * np.pi / 180
 
     R = np.diag([sigma_r**2, sigma_phi**2])
-    meas_model = RangeBearing(pos)
+    meas_model = RangeBearing(pos, R)
     true_states, measurements = gen_dummy_data(K, sampling_period, meas_model,
                                                R)
     cartes_meas = np.array(
@@ -29,17 +37,9 @@ def main():
     x_0 = np.zeros((5, ))
     P_0 = np.diag(
         [10**2, 10**2, 10**2, (5 * np.pi / 180)**2, (1 * np.pi / 180)**2])
-    v_scale = 0.01
-    omega_scale = 1
-    sigma_v = v_scale * 1
-    sigma_omega = omega_scale * np.pi / 180
-    Q = np.diag([
-        0, 0, sampling_period * sigma_v**2, 0, sampling_period * sigma_omega**2
-    ])
-    motion_model = CoordTurn(sampling_period=sampling_period)
 
-    xf, Pf, xp, Pp = non_linear_kalman_filter(Ekf(), measurements, x_0, P_0,
-                                              motion_model, Q, meas_model, R)
+    xf, Pf, xp, Pp = slr_kalman_filter(measurements, x_0, P_0, motion_model,
+                                       meas_model, num_samples)
     #xs, Ps = rts_smoothing(xf, Pf, xp, Pp, motion_model)
     plot_(true_states, cartes_meas, xf, Pf)
     # plot_(true_states, cartes_meas, xs[-10:, :], Ps)
@@ -60,10 +60,10 @@ def gen_dummy_data(num_samples, sampling_period, meas_model, R):
     # Allocate memory
     true_states = np.zeros((num_samples + 1, initial_state.shape[0]))
     true_states[0, :] = initial_state
-    coord_turn = CoordTurn(sampling_period)
+    coord_turn = CoordTurn(sampling_period, None)
     # Create true track
     for k in range(1, num_samples + 1):
-        new_state, _ = coord_turn.mean_and_jacobian(true_states[k - 1, :])
+        new_state = coord_turn.mean(true_states[k - 1, :])
         true_states[k, :] = new_state
         true_states[k, 4] = omega[k]
 
@@ -79,8 +79,7 @@ def gen_non_lin_meas(states, meas_model, R):
         R np.array((D_y, D_y))
     """
 
-    meas_mean = np.apply_along_axis(
-        lambda state: meas_model.mean_and_jacobian(state)[0], 1, states)
+    meas_mean = np.apply_along_axis(meas_model.mean, 1, states)
     num_states, meas_dim = meas_mean.shape
     noise = mvn.rvs(mean=np.zeros((meas_dim, )), cov=R, size=num_states)
     return meas_mean + noise

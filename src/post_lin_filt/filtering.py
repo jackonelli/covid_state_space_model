@@ -37,7 +37,9 @@ def slr_kalman_filter(measurements, prior_mean, prior_cov,
     pred_states = np.zeros((K, dim_x))
     pred_covs = np.zeros((K, dim_x, dim_x))
     filter_ = SlrFilter(motion_model, meas_model, num_samples)
+    print("P_0", prior_cov.shape)
     for k in range(K):
+        print("time step:", k)
         meas = measurements[k, :]
         # Run filter iteration
         pred_mean, pred_cov = filter_.predict(prior_mean, prior_cov)
