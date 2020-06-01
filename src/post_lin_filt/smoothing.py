@@ -4,8 +4,8 @@ from post_lin_filt.slr.distributions import Conditional, Gaussian
 from post_lin_filt.slr.slr import Slr
 
 
-def rts_smoothing(filtered_means, filtered_covs, pred_means, pred_covs,
-                  motion_model: Conditional, num_samples):
+def slr_rts_smoothing(filtered_means, filtered_covs, pred_means, pred_covs,
+                      motion_model: Conditional, num_samples):
     """Rauch-Tung-Striebel smoothing
     Smooths a measurement sequence and outputs from a Kalman filter.
 
@@ -64,6 +64,5 @@ def _rts_update(xs_kplus1, Ps_kplus1, xf_k, Pf_k, xp_kplus1, Pp_kplus1,
 
     G_k = Pf_k @ A.T @ np.linalg.inv(Pp_kplus1)
     xs_k = xf_k + G_k @ (xs_kplus1 - xp_kplus1)
-    # TODO Check order in Pp Ps
     Ps_k = Pf_k - G_k @ (Ps_kplus1 - Pp_kplus1) @ G_k.T
     return xs_k, Ps_k

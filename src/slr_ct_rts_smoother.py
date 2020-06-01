@@ -4,14 +4,15 @@ import numpy as np
 from scipy.stats import multivariate_normal as mvn
 import matplotlib.pyplot as plt
 from post_lin_filt.filtering import slr_kalman_filter
+from post_lin_filt.smoothing import slr_rts_smoothing
 from models.range_bearing import to_cartesian_coords
 from models.coord_turn import CoordTurn
 from models.range_bearing import RangeBearing
 
 
 def main():
-    K = 600
-    num_samples = 100
+    K = 60
+    num_samples = 1000
 
     # Motion model
     sampling_period = 0.1
@@ -47,9 +48,9 @@ def main():
 
     xf, Pf, xp, Pp = slr_kalman_filter(measurements, x_0, P_0, motion_model,
                                        meas_model, num_samples)
-    #xs, Ps = rts_smoothing(xf, Pf, xp, Pp, motion_model)
+    xs, Ps = slr_rts_smoothing(xf, Pf, xp, Pp, motion_model, num_samples)
     plot_(true_states, cartes_meas, xf, Pf)
-    # plot_(true_states, cartes_meas, xs[-10:, :], Ps)
+    plot_(true_states, cartes_meas, xs[-10:, :], Ps)
 
 
 def plot_(true_states, meas, filtered_mean, filtered_cov):

@@ -33,7 +33,7 @@ def slr_kalman_filter(measurements, prior_mean, prior_cov,
     pred_means = np.zeros((K, dim_x))
     pred_covs = np.zeros((K, dim_x, dim_x))
     for k in range(K):
-        print("time step:", k)
+        print("Time step: ", k)
         meas = measurements[k, :]
 
         pred_mean, pred_cov = _predict(prior_mean, prior_cov, motion_model,
@@ -53,7 +53,6 @@ def slr_kalman_filter(measurements, prior_mean, prior_cov,
 
 def _predict(prior_mean, prior_cov, motion_model: Conditional,
              num_samples: int):
-    print("Predict")
     slr = Slr(Gaussian(x_bar=prior_mean, P=prior_cov), motion_model)
     A, b, Q = slr.linear_parameters(num_samples)
     pred_mean = A @ prior_mean + b
@@ -63,7 +62,6 @@ def _predict(prior_mean, prior_cov, motion_model: Conditional,
 
 def _update(meas, pred_mean, pred_cov, meas_model: Conditional,
             num_samples: int):
-    print("Update")
     slr = Slr(Gaussian(x_bar=pred_mean, P=pred_cov), meas_model)
     H, c, R = slr.linear_parameters(num_samples)
     meas_mean = H @ pred_mean + c

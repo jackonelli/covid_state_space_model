@@ -1,7 +1,6 @@
 """Stochastic linear regression (SLR)"""
 import numpy as np
 from post_lin_filt.slr.distributions import Gaussian, Conditional
-from models.range_bearing import to_cartesian_coords
 
 
 class Slr:
@@ -11,7 +10,7 @@ class Slr:
         self.p_z_given_x = p_z_given_x
 
     def linear_parameters(self, num_samples):
-        """Estimate linear paramters"""
+        """Estimate linear parameters"""
         x_sample, z_sample = self._sample(num_samples)
         z_bar = self._z_bar(z_sample)
         psi = self._psi(x_sample, z_sample, z_bar)
@@ -29,13 +28,21 @@ class Slr:
 
     @staticmethod
     def _z_bar(z_sample):
+        """Calc z_bar
+
+        Args:
+            z_sample (N, D_z)
+
+        Returns:
+            z_bar (D_z,)
+        """
         return _bar(z_sample)
 
     def _psi(self, x_sample, z_sample, z_bar):
-        """Calc Psi
+        """Calc Psi = Cov[x, z]
         Vectorization:
         x_diff.T @ z_diff is a matrix mult with dim's:
-        (D_x, N) * (N, D_y): The sum of the product of
+        (D_x, N) * (N, D_z): The sum of the product of
         each element in x_i and y_i will be computed.
 
         Args:
@@ -44,7 +51,7 @@ class Slr:
             z_bar (D_z,)
 
         Returns:
-            Psi (D_x, D_y)
+            Psi (D_x, D_z)
         """
         sample_size, x_dim = x_sample.shape
         x_diff = x_sample - self.p_x.x_bar
@@ -53,13 +60,27 @@ class Slr:
         return cov / sample_size
 
     def _phi(self, z_sample, z_bar):
+        """Calc Phi = Cov[z, z]
+        Vectorization:
+        z_diff.T @ z_diff is a matrix mult with dim's:
+        (D_z, N) * (N, D_z): The sum of the product of
+        each element in x_i and y_i will be computed.
+
+        Args:
+            z_sample (N, D_z)
+            z_bar (D_z,)
+
+        Returns:
+            Psi (D_z, D_z)
+        """
         sample_size = z_sample.shape[0]
         z_diff = z_sample - z_bar
         return z_diff.T @ z_diff / sample_size
 
 
-import matplotlib.pyplot as plt
 import time
+import matplotlib.pyplot as plt
+from models.range_bearing import to_cartesian_coords
 
 
 def plot_state(states):

@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.stats import multivariate_normal as mvn
 from post_lin_filt.filtering import slr_kalman_filter
-from post_lin_filt.smoothing import rts_smoothing
+from post_lin_filt.smoothing import slr_rts_smoothing
 from post_lin_filt.slr.slr import Slr, _bar
 from models.affine import Affine
 from post_lin_filt.slr.distributions import Gaussian
@@ -45,7 +45,7 @@ def test_slr_kf_filter(true_x, y, prior_mean, prior_cov, motion_model,
                                        meas_model, num_samples)
 
     print("\nSMOOTHING\n")
-    xs, Ps = rts_smoothing(xf, Pf, xp, Pp, motion_model, num_samples)
+    xs, Ps = slr_rts_smoothing(xf, Pf, xp, Pp, motion_model, num_samples)
     fig, ax = plt.subplots()
     plot_filtered(ax, true_x, y, xf, Pf, xs)
     ax.legend()
