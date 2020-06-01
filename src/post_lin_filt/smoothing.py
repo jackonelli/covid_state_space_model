@@ -1,10 +1,11 @@
 """Rauch-Tung-Striebel (RTS) smoothing"""
 import numpy as np
-from post_lin_filt.deprecated.motion_models.interface import MotionModel
+from post_lin_filt.slr.distributions import Conditional, Gaussian
+from post_lin_filt.slr.slr import Slr
 
 
 def rts_smoothing(filtered_means, filtered_covs, pred_means, pred_covs,
-                  motion_model):
+                  motion_model: Conditional, num_samples):
     """Rauch-Tung-Striebel smoothing
     Smooths a measurement sequence and outputs from a Kalman filter.
 
@@ -13,9 +14,7 @@ def rts_smoothing(filtered_means, filtered_covs, pred_means, pred_covs,
         filtered_covs np.array(): Filter error covariance
         pred_means np.array(): Predicted estimates for times 1,..., K
         pred_covs np.array(): Filter error covariance
-        motion_model: Motion model function handle
-                      Takes as input x (state)
-                      Returns predicted mean and Jacobian evaluated at x
+        motion_model (Conditional):
 
     Returns:
         smooth_means np.array(): Smooth estimates for times 1,..., K
@@ -39,14 +38,14 @@ def rts_smoothing(filtered_means, filtered_covs, pred_means, pred_covs,
                                               filtered_covs[k, :, :],
                                               pred_means[k + 1, :],
                                               pred_covs[k + 1, :, :],
-                                              motion_model)
+                                              motion_model, num_samples)
         smooth_means[k, :] = smooth_mean
         smooth_covs[k, :, :] = smooth_cov
     return smooth_means, smooth_covs
 
 
 def _rts_update(xs_kplus1, Ps_kplus1, xf_k, Pf_k, xp_kplus1, Pp_kplus1,
-                motion_model: MotionModel):
+                motion_model: Conditional, num_samples):
     """Non-linear Kalman filter prediction
     calculates mean and covariance of predicted state density
     using a non-linear Gaussian model.
@@ -54,18 +53,16 @@ def _rts_update(xs_kplus1, Ps_kplus1, xf_k, Pf_k, xp_kplus1, Pp_kplus1,
     Args:
         prior_mean np.array(D_x): Prior mean
         prior_cov np.array(D_x, D_x): Prior covariance
-        motion_model: Motion model function handle
-                      Takes as input x (state)
-                      Returns predicted mean and Jacobian evaluated at x
+        motion_model (Conditional):
 
     Returns:
        pred_mean np.array(D_x, D_x): predicted state mean
        pred_cov np.array(D_x, D_x): predicted state covariance
     """
-    _, jacobian = motion_model.mean_and_jacobian(xf_k)
-    P_kkplus1 = Pf_k @ jacobian.T
+    slr = Slr(Gaussian(x_bar=xf_k, P=Pf_k), motion_model)
+    A, b, Q = slr.linear_parameters(num_samples)
 
-    G_k = P_kkplus1 @ np.linalg.inv(Pp_kplus1)
+    G_k = Pf_k @ A.T @ np.linalg.inv(Pp_kplus1)
     xs_k = xf_k + G_k @ (xs_kplus1 - xp_kplus1)
     # TODO Check order in Pp Ps
     Ps_k = Pf_k - G_k @ (Ps_kplus1 - Pp_kplus1) @ G_k.T

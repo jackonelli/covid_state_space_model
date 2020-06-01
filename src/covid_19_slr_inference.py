@@ -4,7 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from post_lin_filt.filtering import slr_kalman_filter
 from post_lin_filt.smoothing import rts_smoothing
-from post_lin_filt.slr.conditionals import fhm
+from models import fhm
 from post_lin_filt.filter_type.slr import SlrFilter
 from data.c19 import C19Data
 

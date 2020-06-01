@@ -4,14 +4,16 @@ import numpy as np
 from scipy.stats import multivariate_normal as mvn
 import matplotlib.pyplot as plt
 from post_lin_filt.filtering import slr_kalman_filter
-from post_lin_filt.slr.conditionals.range_bearing import to_cartesian_coords
-from post_lin_filt.slr.conditionals.coord_turn import CoordTurn
-from post_lin_filt.slr.conditionals.range_bearing import RangeBearing
+from models.range_bearing import to_cartesian_coords
+from models.coord_turn import CoordTurn
+from models.range_bearing import RangeBearing
 
 
 def main():
     K = 600
     num_samples = 100
+
+    # Motion model
     sampling_period = 0.1
     v_scale = 0.01
     omega_scale = 1
@@ -22,18 +24,23 @@ def main():
     ])
     motion_model = CoordTurn(sampling_period, Q)
 
+    # Meas model
     pos = np.array([280, -140])
     sigma_r = 15
     sigma_phi = 4 * np.pi / 180
 
     R = np.diag([sigma_r**2, sigma_phi**2])
     meas_model = RangeBearing(pos, R)
+
+    # Generate data
     true_states, measurements = gen_dummy_data(K, sampling_period, meas_model,
                                                R)
     cartes_meas = np.array(
         [to_cartesian_coords(meas, pos) for meas in measurements])
     cartes_meas = np.apply_along_axis(partial(to_cartesian_coords, pos=pos), 1,
                                       measurements)
+
+    # Prior distr.
     x_0 = np.zeros((5, ))
     P_0 = np.diag(
         [10**2, 10**2, 10**2, (5 * np.pi / 180)**2, (1 * np.pi / 180)**2])

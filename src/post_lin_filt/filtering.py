@@ -13,53 +13,50 @@ def slr_kalman_filter(measurements, prior_mean, prior_cov,
         measurements np.array(K, D_y): Measurement sequence for times 1,..., K
         prior_mean np.array(D_x,): Prior mean for time 0
         prior_cov np.array(D_x, D_x): Prior covariance
-        motion_model: Motion model function handle
-                      Takes as input x (state)
-                      Returns predicted mean and Jacobian evaluated at x
+        motion_model:
         process_noise_cov np.array(D_x, D_x): Process noise covariance
-        meas_model: Measurement model function handle
-                    Takes as input x (state),
-                    Returns measurement mean and Jacobian evaluated at x
+        meas_model:
         meas_noise_cov np.array(D_y, D_y): Measurement noise covariance
 
     Returns:
-        filtered_mean np.array(): Filtered estimates for times 1,..., K
-        filtered_cov np.array(): Filter error covariance
-        pred_states np.array(): Predicted estimates for times 1,..., K
+        filtered_means np.array(K, D_x): Filtered estimates for times 1,..., K
+        filtered_cov np.array(K, D_x, D_x): Filter error covariance
+        pred_means np.array(): Predicted estimates for times 1,..., K
         pred_cov np.array(): Filter error covariance
     """
 
     K = measurements.shape[0]
     dim_x = prior_mean.shape[0]
-    # Data allocation
-    filtered_states = np.zeros((K, dim_x))
+
+    filtered_means = np.zeros((K, dim_x))
     filtered_cov = np.zeros((K, dim_x, dim_x))
-    pred_states = np.zeros((K, dim_x))
+    pred_means = np.zeros((K, dim_x))
     pred_covs = np.zeros((K, dim_x, dim_x))
-    print("P_0", prior_cov.shape)
     for k in range(K):
         print("time step:", k)
         meas = measurements[k, :]
-        # Run filter iteration
+
         pred_mean, pred_cov = predict(prior_mean, prior_cov, motion_model,
                                       num_samples)
 
         updated_mean, updated_cov = update(meas, pred_mean, pred_cov,
                                            meas_model, num_samples)
-        # Store the parameters for use in next step
-        pred_states[k, :] = pred_mean
+
+        pred_means[k, :] = pred_mean
         pred_covs[k, :, :] = pred_cov
-        filtered_states[k, :] = updated_mean
+        filtered_means[k, :] = updated_mean
         filtered_cov[k, :, :] = updated_cov
         prior_mean = updated_mean
         prior_cov = updated_cov
-    return filtered_states, filtered_cov, pred_states, pred_covs
+    return filtered_means, filtered_cov, pred_means, pred_covs
 
 
 def predict(prior_mean, prior_cov, motion_model: Conditional,
             num_samples: int):
+    print("Predict")
     slr = Slr(Gaussian(x_bar=prior_mean, P=prior_cov), motion_model)
     A, b, Q = slr.linear_parameters(num_samples)
+    print("A: {}\nb: {}\nQ: {}".format(A, b, Q))
     pred_mean = A @ prior_mean + b
     pred_cov = A @ prior_cov @ A.T + Q
     return pred_mean, pred_cov
@@ -68,13 +65,13 @@ def predict(prior_mean, prior_cov, motion_model: Conditional,
 def update(meas, prior_mean, prior_cov, meas_model: Conditional,
            num_samples: int):
     print("Update")
+    print("prior mean", prior_mean)
+    print("prior cov", prior_cov)
     slr = Slr(Gaussian(x_bar=prior_mean, P=prior_cov), meas_model)
     H, c, R = slr.linear_parameters(num_samples)
+    print("H: {}\nc: {}\nR: {}".format(H, c, R))
     meas_mean = H @ prior_mean + c
-    print("prior", prior_mean)
-    print("H", H)
     S = H @ prior_cov @ H.T + R
-    print("S", S)
     K = prior_cov @ H.T @ np.linalg.inv(S)
     updated_mean = prior_mean + K @ (meas - meas_mean)
     updated_cov = prior_cov - K @ S @ K.T
@@ -105,18 +102,18 @@ def non_linear_kalman_filter(filter_type: FilterType, measurements, prior_mean,
         meas_noise_cov np.array(D_y, D_y): Measurement noise covariance
 
     Returns:
-        filtered_mean np.array(): Filtered estimates for times 1,..., K
+        filtered_means np.array(): Filtered estimates for times 1,..., K
         filtered_cov np.array(): Filter error covariance
-        pred_states np.array(): Predicted estimates for times 1,..., K
+        pred_means np.array(): Predicted estimates for times 1,..., K
         pred_cov np.array(): Filter error covariance
     """
 
     K = measurements.shape[0]
     dim_x = prior_mean.shape[0]
     # Data allocation
-    filtered_states = np.zeros((K, dim_x))
+    filtered_means = np.zeros((K, dim_x))
     filtered_cov = np.zeros((K, dim_x, dim_x))
-    pred_states = np.zeros((K, dim_x))
+    pred_means = np.zeros((K, dim_x))
     pred_covs = np.zeros((K, dim_x, dim_x))
     for k in range(K):
         meas = measurements[k, :]
@@ -128,10 +125,10 @@ def non_linear_kalman_filter(filter_type: FilterType, measurements, prior_mean,
                                                        meas, meas_model,
                                                        meas_noise_cov)
         # Store the parameters for use in next step
-        pred_states[k, :] = pred_mean
+        pred_means[k, :] = pred_mean
         pred_covs[k, :, :] = pred_cov
-        filtered_states[k, :] = updated_mean
+        filtered_means[k, :] = updated_mean
         filtered_cov[k, :, :] = updated_cov
         prior_mean = updated_mean
         prior_cov = updated_cov
-    return filtered_states, filtered_cov, pred_states, pred_covs
+    return filtered_means, filtered_cov, pred_means, pred_covs
