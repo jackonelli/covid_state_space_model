@@ -1,7 +1,7 @@
 """Rauch-Tung-Striebel (RTS) smoothing"""
 import numpy as np
-from post_lin_filt.slr.distributions import Conditional, Gaussian
-from post_lin_filt.slr.slr import Slr
+from post_lin_smooth.slr.distributions import Conditional, Gaussian
+from post_lin_smooth.slr.slr import Slr
 
 
 def slr_rts_smoothing(filtered_means, filtered_covs, pred_means, pred_covs,

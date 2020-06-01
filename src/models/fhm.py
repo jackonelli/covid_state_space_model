@@ -13,8 +13,8 @@ The state is:
 from dataclasses import dataclass
 import numpy as np
 from scipy.stats import binom
-from post_lin_filt.motion_models.interface import MotionModel
-from post_lin_filt.slr.distributions import Conditional
+from post_lin_smooth.motion_models.interface import MotionModel
+from post_lin_smooth.slr.distributions import Conditional
 
 
 @dataclass

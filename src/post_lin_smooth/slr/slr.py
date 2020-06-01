@@ -1,6 +1,6 @@
 """Stochastic linear regression (SLR)"""
 import numpy as np
-from post_lin_filt.slr.distributions import Gaussian, Conditional
+from post_lin_smooth.slr.distributions import Gaussian, Conditional
 
 
 class Slr:

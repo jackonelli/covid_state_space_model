@@ -1,7 +1,7 @@
 """Stochastic affine model for comparison with analytical KF"""
 import numpy as np
 from scipy.stats import multivariate_normal as mvn
-from post_lin_filt.slr.distributions import Conditional
+from post_lin_smooth.slr.distributions import Conditional
 
 
 class Affine(Conditional):

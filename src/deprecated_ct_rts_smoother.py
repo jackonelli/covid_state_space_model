@@ -3,12 +3,12 @@ from functools import partial
 import numpy as np
 from scipy.stats import multivariate_normal as mvn
 import matplotlib.pyplot as plt
-from post_lin_filt.filtering import non_linear_kalman_filter
-from post_lin_filt.deprecated.filter_type.ekf import Ekf
-from post_lin_filt.smoothing import rts_smoothing
-from post_lin_filt.deprecated.meas_models.range_bearing import RangeBearing
+from post_lin_smooth.filtering import non_linear_kalman_filter
+from post_lin_smooth.deprecated.filter_type.ekf import Ekf
+from post_lin_smooth.smoothing import rts_smoothing
+from post_lin_smooth.deprecated.meas_models.range_bearing import RangeBearing
+from post_lin_smooth.deprecated.motion_models.coord_turn import CoordTurn
 from models.range_bearing import to_cartesian_coords
-from post_lin_filt.deprecated.motion_models.coord_turn import CoordTurn
 
 
 def main():

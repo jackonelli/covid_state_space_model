@@ -2,10 +2,10 @@ import numpy as np
 from scipy.stats import multivariate_normal as mvn
 from scipy.linalg import sqrtm
 import matplotlib.pyplot as plt
-from post_lin_filt.slr.slr import Slr
+from post_lin_smooth.slr.slr import Slr
+from post_lin_smooth.slr.distributions import Conditional, Gaussian
 from models.coord_turn import CoordTurn
 from models.range_bearing import RangeBearing
-from post_lin_filt.slr.distributions import Conditional, Gaussian
 
 
 def main():

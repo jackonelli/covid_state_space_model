@@ -3,8 +3,8 @@ from functools import partial
 import numpy as np
 from scipy.stats import multivariate_normal as mvn
 import matplotlib.pyplot as plt
-from post_lin_filt.filtering import slr_kalman_filter
-from post_lin_filt.smoothing import slr_rts_smoothing
+from post_lin_smooth.filtering import slr_kalman_filter
+from post_lin_smooth.smoothing import slr_rts_smoothing
 from models.range_bearing import to_cartesian_coords
 from models.coord_turn import CoordTurn
 from models.range_bearing import RangeBearing
