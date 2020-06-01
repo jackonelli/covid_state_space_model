@@ -2,9 +2,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.stats import multivariate_normal as mvn
 from post_lin_filt.filtering import slr_kalman_filter
-from post_lin_filt.slr.slr import Slr
+from post_lin_filt.smoothing import rts_smoothing
+from post_lin_filt.slr.slr import Slr, _bar
 from models.affine import Affine
 from post_lin_filt.slr.distributions import Gaussian
+from slr_debug import plot_sigma_level
 
 
 def main():
@@ -19,33 +21,47 @@ def main():
     R = np.array([2])
     K = 20
 
-    num_samples = 10000
+    num_samples = 100
     motion_model = Affine(A, b, Q)
     meas_model = Affine(H, c, R)
-    # slr = Slr(Gaussian(x_bar=prior_mean, P=prior_cov), motion_model)
-    # print("SLR: \nA: {}\nb: {}\nQ: {}".format(
-    #     *slr.linear_parameters(num_samples)))
-
     true_x = gen_linear_state_seq(prior_mean, prior_cov, A, Q, K)
     y = gen_linear_meas_seq(true_x, H, R)
 
-    xf, Pf = None, None
+    test_slr_kf_filter(true_x, y, prior_mean, prior_cov, motion_model,
+                       meas_model, num_samples)
+
+
+def true_kf_param(A, b, Q, H, c, R, prior_mean, prior_cov, meas):
+    pred_mean = A @ prior_mean + b
+    pred_cov = A @ prior_cov @ A.T + Q
+    print("pred_mean", pred_mean)
+    print("pred_cov", pred_cov)
+
+
+def test_slr_kf_filter(true_x, y, prior_mean, prior_cov, motion_model,
+                       meas_model, num_samples):
+    print("\nFILTERING\n")
     xf, Pf, xp, Pp = slr_kalman_filter(y, prior_mean, prior_cov, motion_model,
                                        meas_model, num_samples)
 
+    print("\nSMOOTHING\n")
+    xs, Ps = rts_smoothing(xf, Pf, xp, Pp, motion_model, num_samples)
     fig, ax = plt.subplots()
-    plot_filtered(ax, true_x, y, xf, Pf)
+    plot_filtered(ax, true_x, y, xf, Pf, xs)
+    ax.legend()
     plt.show()
 
 
-def plot_filtered(ax, true_x, meas, xf, Pf):
+def plot_filtered(ax, true_x, meas, xf, Pf, xs):
     plot_states_meas(ax, true_x, meas)
-    # ax.plot(xf[:, 0], "r-")
+    ax.plot(xf[:, 0], "r-", label="x_f")
+    ax.plot(xs[:, 0], "g-", label="x_s")
 
 
 def plot_states_meas(ax, true_x, meas):
-    ax.plot(true_x[:, 0], "b-")
-    ax.plot(meas, "r*")
+    ax.plot(true_x[:, 0], "b-", label="true x")
+    ax.plot(meas, "r*", label="meas")
+    return ax
 
 
 def plot_states_meas(ax, true_x, meas):

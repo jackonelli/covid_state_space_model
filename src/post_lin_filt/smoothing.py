@@ -21,18 +21,18 @@ def rts_smoothing(filtered_means, filtered_covs, pred_means, pred_covs,
         smooth_covs np.array(): Smooth error covariance
     """
 
-    K_plus_1, dim_x = filtered_means.shape
-    K = K_plus_1 - 1
+    K, dim_x = filtered_means.shape
 
     # Allocation
     smooth_means = np.zeros((K, dim_x))
     smooth_covs = np.zeros((K, dim_x, dim_x))
-    smooth_mean = filtered_means[K - 1, :]
-    smooth_cov = filtered_covs[K - 1, :, :]
+    smooth_mean = filtered_means[-1, :]
+    smooth_cov = filtered_covs[-1, :, :]
     smooth_means[-1, :] = smooth_mean
     smooth_covs[-1, :, :] = smooth_cov
-    for k in np.flip(np.arange(K)):
+    for k in np.flip(np.arange(K - 1)):
         # Run filter iteration
+        print("Time step: ", k)
         smooth_mean, smooth_cov = _rts_update(smooth_mean, smooth_cov,
                                               filtered_means[k, :],
                                               filtered_covs[k, :, :],
