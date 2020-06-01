@@ -11,7 +11,6 @@ from models.range_bearing import RangeBearing
 
 
 def main():
-    K = 600
     num_samples = 1000
 
     # Motion model
@@ -26,15 +25,18 @@ def main():
     motion_model = CoordTurn(sampling_period, Q)
 
     # Meas model
-    pos = np.array([280, -140])
+    pos = np.array([100, -100])
     sigma_r = 1
     sigma_phi = 0.5 * np.pi / 180
 
     R = np.diag([sigma_r**2, sigma_phi**2])
-    meas_model = RangeBearing(pos, R
+    meas_model = RangeBearing(pos, R)
+
     # Generate data
-    true_states, measurements = gen_dummy_data(K, sampling_period, meas_model,
-                                               R)
+    # K = 600
+    # true_states, measurements = gen_dummy_data(K, sampling_period, meas_model,
+    #                                            R)
+    true_states, measurements = gen_tricky_data(meas_model, R)
     cartes_meas = np.array(
         [to_cartesian_coords(meas, pos) for meas in measurements])
     cartes_meas = np.apply_along_axis(partial(to_cartesian_coords, pos=pos), 1,
@@ -48,15 +50,19 @@ def main():
     xf, Pf, xp, Pp = slr_kalman_filter(measurements, x_0, P_0, motion_model,
                                        meas_model, num_samples)
     xs, Ps = slr_rts_smoothing(xf, Pf, xp, Pp, motion_model, num_samples)
-    plot_(true_states, cartes_meas, xf, Pf)
-    plot_(true_states, cartes_meas, xs, Ps)
+    plot_(true_states, cartes_meas, xf, Pf, xs, Ps)
 
 
 def plot_(true_states, meas, filtered_mean, filtered_cov):
+    plt.plot(meas[:, 0], meas[:, 1], "r*")
     plt.plot(true_states[:, 0], true_states[:, 1], "b-")
     plt.plot(filtered_mean[:, 0], filtered_mean[:, 1])
-    plt.plot(meas[:, 0], meas[:, 1], "r*")
     plt.show()
+
+
+def gen_tricky_data(meas_model, R):
+    true_states = np.loadtxt("ct_data.csv")
+    return true_states, gen_non_lin_meas(true_states, meas_model, R)
 
 
 def gen_dummy_data(num_samples, sampling_period, meas_model, R):
