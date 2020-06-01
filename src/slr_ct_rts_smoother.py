@@ -47,16 +47,19 @@ def main():
     P_0 = np.diag(
         [10**2, 10**2, 10**2, (5 * np.pi / 180)**2, (1 * np.pi / 180)**2])
 
-    xf, Pf, xp, Pp = slr_kalman_filter(measurements, x_0, P_0, motion_model,
-                                       meas_model, num_samples)
-    xs, Ps = slr_rts_smoothing(xf, Pf, xp, Pp, motion_model, num_samples)
+    xf, Pf, xp, Pp, linearizations = slr_kalman_filter(measurements, x_0, P_0,
+                                                       motion_model,
+                                                       meas_model, num_samples)
+    xs, Ps = slr_rts_smoothing(xf, Pf, xp, Pp, linearizations)
     plot_(true_states, cartes_meas, xf, Pf, xs, Ps)
 
 
-def plot_(true_states, meas, filtered_mean, filtered_cov):
-    plt.plot(meas[:, 0], meas[:, 1], "r*")
+def plot_(true_states, meas, filtered_mean, filtered_cov, smooth_mean,
+          smooth_cov):
+    plt.plot(meas[:, 0], meas[:, 1], "r.")
     plt.plot(true_states[:, 0], true_states[:, 1], "b-")
-    plt.plot(filtered_mean[:, 0], filtered_mean[:, 1])
+    plt.plot(filtered_mean[:, 0], filtered_mean[:, 1], "r-")
+    plt.plot(smooth_mean[:, 0], smooth_mean[:, 1], "g-")
     plt.show()
 
 

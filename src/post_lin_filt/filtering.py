@@ -32,23 +32,25 @@ def slr_kalman_filter(measurements, prior_mean, prior_cov,
     filtered_cov = np.zeros((K, dim_x, dim_x))
     pred_means = np.zeros((K, dim_x))
     pred_covs = np.zeros((K, dim_x, dim_x))
+    linearizations = [None] * K
     for k in range(K):
         print("Time step: ", k)
         meas = measurements[k, :]
 
-        pred_mean, pred_cov = _predict(prior_mean, prior_cov, motion_model,
-                                       num_samples)
+        pred_mean, pred_cov, A, b, Q = _predict(prior_mean, prior_cov,
+                                                motion_model, num_samples)
 
         updated_mean, updated_cov = _update(meas, pred_mean, pred_cov,
                                             meas_model, num_samples)
 
+        linearizations[k] = (A, b, Q)
         pred_means[k, :] = pred_mean
         pred_covs[k, :, :] = pred_cov
         filtered_means[k, :] = updated_mean
         filtered_cov[k, :, :] = updated_cov
         prior_mean = updated_mean
         prior_cov = updated_cov
-    return filtered_means, filtered_cov, pred_means, pred_covs
+    return filtered_means, filtered_cov, pred_means, pred_covs, linearizations
 
 
 def _predict(prior_mean, prior_cov, motion_model: Conditional,
@@ -57,7 +59,7 @@ def _predict(prior_mean, prior_cov, motion_model: Conditional,
     A, b, Q = slr.linear_parameters(num_samples)
     pred_mean = A @ prior_mean + b
     pred_cov = A @ prior_cov @ A.T + Q
-    return pred_mean, pred_cov
+    return pred_mean, pred_cov, A, b, Q
 
 
 def _update(meas, pred_mean, pred_cov, meas_model: Conditional,

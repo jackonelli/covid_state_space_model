@@ -5,7 +5,7 @@ from post_lin_filt.slr.slr import Slr
 
 
 def slr_rts_smoothing(filtered_means, filtered_covs, pred_means, pred_covs,
-                      motion_model: Conditional, num_samples):
+                      linearizations):
     """Rauch-Tung-Striebel smoothing
     Smooths a measurement sequence and outputs from a Kalman filter.
 
@@ -14,7 +14,8 @@ def slr_rts_smoothing(filtered_means, filtered_covs, pred_means, pred_covs,
         filtered_covs np.array(): Filter error covariance
         pred_means np.array(): Predicted estimates for times 1,..., K
         pred_covs np.array(): Filter error covariance
-        motion_model (Conditional):
+        linearizations List(np.array, np.array, np.array):
+            List of tuples (A, b, Q), param's for linear approx
 
     Returns:
         smooth_means np.array(): Smooth estimates for times 1,..., K
@@ -33,19 +34,20 @@ def slr_rts_smoothing(filtered_means, filtered_covs, pred_means, pred_covs,
     for k in np.flip(np.arange(K - 1)):
         # Run filter iteration
         print("Time step: ", k)
+        linear_params = linearizations[k]
         smooth_mean, smooth_cov = _rts_update(smooth_mean, smooth_cov,
                                               filtered_means[k, :],
                                               filtered_covs[k, :, :],
                                               pred_means[k + 1, :],
                                               pred_covs[k + 1, :, :],
-                                              motion_model, num_samples)
+                                              linear_params)
         smooth_means[k, :] = smooth_mean
         smooth_covs[k, :, :] = smooth_cov
     return smooth_means, smooth_covs
 
 
 def _rts_update(xs_kplus1, Ps_kplus1, xf_k, Pf_k, xp_kplus1, Pp_kplus1,
-                motion_model: Conditional, num_samples):
+                linear_params):
     """Non-linear Kalman filter prediction
     calculates mean and covariance of predicted state density
     using a non-linear Gaussian model.
@@ -53,14 +55,13 @@ def _rts_update(xs_kplus1, Ps_kplus1, xf_k, Pf_k, xp_kplus1, Pp_kplus1,
     Args:
         prior_mean np.array(D_x): Prior mean
         prior_cov np.array(D_x, D_x): Prior covariance
-        motion_model (Conditional):
+        linear params tuple: (A, b, Q), linear params for timestep k.
 
     Returns:
        pred_mean np.array(D_x, D_x): predicted state mean
        pred_cov np.array(D_x, D_x): predicted state covariance
     """
-    slr = Slr(Gaussian(x_bar=xf_k, P=Pf_k), motion_model)
-    A, b, Q = slr.linear_parameters(num_samples)
+    A, b, Q = linear_params
 
     G_k = Pf_k @ A.T @ np.linalg.inv(Pp_kplus1)
     xs_k = xf_k + G_k @ (xs_kplus1 - xp_kplus1)
