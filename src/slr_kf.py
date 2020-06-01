@@ -10,18 +10,23 @@ from slr_debug import plot_sigma_level
 
 
 def main():
-    prior_mean = np.array([1, 3])
-    prior_cov = 1 * np.eye(2)
+    prior_mean = np.array([1, 1, 3, 2])
+    prior_cov = 1 * np.eye(4)
     T = 1
-    A = np.array([[1, T], [0, 1]])
-    b = 0 * np.ones((2, ))
-    Q = np.array([[0, 0], [0, 1.5]])
-    H = np.array([[1, 0]])
+    A = np.array([[1, 0, T, 0], [0, 1, 0, T], [0, 0, 1, 0], [0, 0, 0, 1]])
+    b = 0 * np.ones((4, ))
+    Q = np.array([
+        [0, 0, 0, 0],
+        [0, 0, 0, 0],
+        [0, 0, 1.5, 0],
+        [0, 0, 0, 1.5],
+    ])
+    H = np.array([[1, 0, 0, 0], [0, 1, 0, 0]])
     c = np.zeros((H @ prior_mean).shape)
-    R = np.array([2])
+    R = 2 * np.eye(2)
     K = 20
 
-    num_samples = 100
+    num_samples = 1000
     motion_model = Affine(A, b, Q)
     meas_model = Affine(H, c, R)
     true_x = gen_linear_state_seq(prior_mean, prior_cov, A, Q, K)
@@ -54,19 +59,14 @@ def test_slr_kf_filter(true_x, y, prior_mean, prior_cov, motion_model,
 
 def plot_filtered(ax, true_x, meas, xf, Pf, xs):
     plot_states_meas(ax, true_x, meas)
-    ax.plot(xf[:, 0], "r-", label="x_f")
-    ax.plot(xs[:, 0], "g-", label="x_s")
+    ax.plot(xf[:, 0], xf[:, 1], "r-", label="x_f")
+    ax.plot(xs[:, 0], xs[:, 1], "g-", label="x_s")
 
 
 def plot_states_meas(ax, true_x, meas):
-    ax.plot(true_x[:, 0], "b-", label="true x")
-    ax.plot(meas, "r*", label="meas")
+    #ax.plot(true_x[:, 0], true_x[:, 1], "b-", label="true x")
+    ax.plot(meas[:, 0], meas[:, 1], "r*", label="meas")
     return ax
-
-
-def plot_states_meas(ax, true_x, meas):
-    ax.plot(true_x[:, 0], "b-")
-    ax.plot(meas, "r*")
 
 
 def gen_linear_state_seq(x_0, P_0, A, Q, K):
@@ -100,7 +100,7 @@ def gen_linear_meas_seq(X, H, R):
     Measurement noise is assumed to be zero mean and Gaussian.
 
     Args:
-        X [K+1 x n] State vector sequence. The k:th state vector is X(:,k+1)
+        X [K x n] State vector sequence. The k:th state vector is X(k, :)
         H [m x n] Measurement matrix
         R [m x m] Measurement noise covariance
 
@@ -108,9 +108,9 @@ def gen_linear_meas_seq(X, H, R):
         Y [K, m] Measurement sequence
     """
 
-    r = mvn.rvs(mean=np.zeros((R.shape[0], 1)), cov=R, size=X.shape[0])
+    r = mvn.rvs(mean=np.zeros((R.shape[0], )), cov=R, size=X.shape[0])
 
-    return (H @ X.T + r).T
+    return (H @ X.T).T + r
 
 
 if __name__ == "__main__":
