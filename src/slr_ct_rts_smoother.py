@@ -11,7 +11,7 @@ from models.range_bearing import RangeBearing
 
 
 def main():
-    K = 60
+    K = 600
     num_samples = 1000
 
     # Motion model
@@ -27,12 +27,11 @@ def main():
 
     # Meas model
     pos = np.array([280, -140])
-    sigma_r = 15
-    sigma_phi = 4 * np.pi / 180
+    sigma_r = 1
+    sigma_phi = 0.5 * np.pi / 180
 
     R = np.diag([sigma_r**2, sigma_phi**2])
-    meas_model = RangeBearing(pos, R)
-
+    meas_model = RangeBearing(pos, R
     # Generate data
     true_states, measurements = gen_dummy_data(K, sampling_period, meas_model,
                                                R)
@@ -50,7 +49,7 @@ def main():
                                        meas_model, num_samples)
     xs, Ps = slr_rts_smoothing(xf, Pf, xp, Pp, motion_model, num_samples)
     plot_(true_states, cartes_meas, xf, Pf)
-    plot_(true_states, cartes_meas, xs[-10:, :], Ps)
+    plot_(true_states, cartes_meas, xs, Ps)
 
 
 def plot_(true_states, meas, filtered_mean, filtered_cov):
