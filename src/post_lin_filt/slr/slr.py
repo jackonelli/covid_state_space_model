@@ -14,14 +14,10 @@ class Slr:
         """Estimate linear paramters"""
         x_sample, z_sample = self._sample(num_samples)
         z_bar = self._z_bar(z_sample)
-        print("z_bar", z_bar)
         psi = self._psi(x_sample, z_sample, z_bar)
-        print("psi", psi.shape)
         phi = self._phi(z_sample, z_bar)
-        print("phi", phi.shape)
-        print("phi", phi)
 
-        A = psi.T @ self.p_x.P
+        A = psi.T @ np.linalg.inv(self.p_x.P)
         b = z_bar - A @ _bar(x_sample)
         Sigma = phi - A @ self.p_x.P @ A.T
         return A, b, Sigma
@@ -36,22 +32,30 @@ class Slr:
         return _bar(z_sample)
 
     def _psi(self, x_sample, z_sample, z_bar):
+        """Calc Psi
+        Vectorization:
+        x_diff.T @ z_diff is a matrix mult with dim's:
+        (D_x, N) * (N, D_y): The sum of the product of
+        each element in x_i and y_i will be computed.
+
+        Args:
+            x_sample (N, D_x)
+            z_sample (N, D_z)
+            z_bar (D_z,)
+
+        Returns:
+            Psi (D_x, D_y)
+        """
         sample_size, x_dim = x_sample.shape
-        z_dim = z_sample.shape[1]
         x_diff = x_sample - self.p_x.x_bar
         z_diff = z_sample - z_bar
-        cov = np.zeros((x_dim, z_dim))
-        for s in np.arange(sample_size):
-            temp = np.expand_dims(x_diff[s, :], 0).T @ np.expand_dims(
-                z_diff[s, :], 0)
-            cov += temp
+        cov = (x_diff.T @ z_diff)
         return cov / sample_size
 
     def _phi(self, z_sample, z_bar):
         sample_size = z_sample.shape[0]
         z_diff = z_sample - z_bar
-        # return z_diff.T @ z_diff / sample_size
-        return np.cov(z_sample.T)
+        return z_diff.T @ z_diff / sample_size
 
 
 import matplotlib.pyplot as plt

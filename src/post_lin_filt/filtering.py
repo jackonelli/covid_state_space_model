@@ -7,7 +7,7 @@ from post_lin_filt.slr.slr import Slr
 def slr_kalman_filter(measurements, prior_mean, prior_cov,
                       motion_model: Conditional, meas_model: Conditional,
                       num_samples):
-    """Non-linear Kalman filter
+    """SLR Kalman filter
     Filters a measurement sequence using a non-linear Kalman filter.
     Args:
         measurements np.array(K, D_y): Measurement sequence for times 1,..., K
@@ -36,11 +36,11 @@ def slr_kalman_filter(measurements, prior_mean, prior_cov,
         print("time step:", k)
         meas = measurements[k, :]
 
-        pred_mean, pred_cov = predict(prior_mean, prior_cov, motion_model,
-                                      num_samples)
+        pred_mean, pred_cov = _predict(prior_mean, prior_cov, motion_model,
+                                       num_samples)
 
-        updated_mean, updated_cov = update(meas, pred_mean, pred_cov,
-                                           meas_model, num_samples)
+        updated_mean, updated_cov = _update(meas, pred_mean, pred_cov,
+                                            meas_model, num_samples)
 
         pred_means[k, :] = pred_mean
         pred_covs[k, :, :] = pred_cov
@@ -51,30 +51,29 @@ def slr_kalman_filter(measurements, prior_mean, prior_cov,
     return filtered_means, filtered_cov, pred_means, pred_covs
 
 
-def predict(prior_mean, prior_cov, motion_model: Conditional,
-            num_samples: int):
+def _predict(prior_mean, prior_cov, motion_model: Conditional,
+             num_samples: int):
     print("Predict")
     slr = Slr(Gaussian(x_bar=prior_mean, P=prior_cov), motion_model)
     A, b, Q = slr.linear_parameters(num_samples)
-    print("A: {}\nb: {}\nQ: {}".format(A, b, Q))
     pred_mean = A @ prior_mean + b
     pred_cov = A @ prior_cov @ A.T + Q
     return pred_mean, pred_cov
 
 
-def update(meas, prior_mean, prior_cov, meas_model: Conditional,
-           num_samples: int):
+def _update(meas, pred_mean, pred_cov, meas_model: Conditional,
+            num_samples: int):
     print("Update")
-    print("prior mean", prior_mean)
-    print("prior cov", prior_cov)
-    slr = Slr(Gaussian(x_bar=prior_mean, P=prior_cov), meas_model)
+    slr = Slr(Gaussian(x_bar=pred_mean, P=pred_cov), meas_model)
     H, c, R = slr.linear_parameters(num_samples)
-    print("H: {}\nc: {}\nR: {}".format(H, c, R))
-    meas_mean = H @ prior_mean + c
-    S = H @ prior_cov @ H.T + R
-    K = prior_cov @ H.T @ np.linalg.inv(S)
-    updated_mean = prior_mean + K @ (meas - meas_mean)
-    updated_cov = prior_cov - K @ S @ K.T
+    meas_mean = H @ pred_mean + c
+    S = H @ pred_cov @ H.T + R
+    K = (pred_cov @ H.T @ np.linalg.inv(S))
+
+    updated_mean = pred_mean + (K @ (meas - meas_mean)).reshape(
+        pred_mean.shape)
+    updated_cov = pred_cov - K @ S @ K.T
+
     return updated_mean, updated_cov
 
 
@@ -118,12 +117,11 @@ def non_linear_kalman_filter(filter_type: FilterType, measurements, prior_mean,
     for k in range(K):
         meas = measurements[k, :]
         # Run filter iteration
-        pred_mean, pred_cov = filter_type.predict(prior_mean, prior_cov,
-                                                  motion_model,
-                                                  process_noise_cov)
-        updated_mean, updated_cov = filter_type.update(pred_mean, pred_cov,
-                                                       meas, meas_model,
-                                                       meas_noise_cov)
+        pred_mean, pred_cov = filter_type._predict(prior_mean, prior_cov,
+                                                   motion_model,
+                                                   process_noise_cov)
+        updated_mean, updated_cov = filter_type._update(
+            pred_mean, pred_cov, meas, meas_model, meas_noise_cov)
         # Store the parameters for use in next step
         pred_means[k, :] = pred_mean
         pred_covs[k, :, :] = pred_cov
