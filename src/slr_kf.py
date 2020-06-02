@@ -4,6 +4,7 @@ from scipy.stats import multivariate_normal as mvn
 from post_lin_smooth.iterative import iterative_post_lin_smooth
 from post_lin_smooth.filtering import analytical_kf
 from post_lin_smooth.smoothing import rts_smoothing
+from post_lin_smooth.slr.distributions import Gaussian
 from models.affine import Affine
 from analytics import nees
 import visualization as vis
@@ -11,7 +12,7 @@ import visualization as vis
 
 def main():
     num_samples = 20000
-    num_iterations = 1
+    num_iterations = 10
 
     prior_mean = np.array([1, 1, 3, 2])
     prior_cov = 1 * np.eye(4)
@@ -29,14 +30,17 @@ def main():
     R = 2 * np.eye(2)
     K = 20
 
+    prior = Gaussian
     motion_model = Affine(A, b, Q)
     meas_model = Affine(H, c, R)
     true_x = gen_linear_state_seq(prior_mean, prior_cov, A, Q, K)
     y = gen_linear_meas_seq(true_x, H, R)
 
-    xs_slr, Ps_slr, x_slr, P_slr, linearizations = iterative_post_lin_smooth(
-        y, prior_mean, prior_cov, motion_model, meas_model, num_samples,
-        num_iterations)
+    (xs_slr, Ps_slr, xf_slr, Pf_slr,
+     linearizations) = iterative_post_lin_smooth(y, prior_mean, prior_cov,
+                                                 prior, motion_model,
+                                                 meas_model, num_samples,
+                                                 num_iterations)
 
     x_kf, P_kf, xp_kf, Pp_kf = analytical_kf(y, prior_mean, prior_cov,
                                              (A, b, Q), (H, c, R))
@@ -55,15 +59,15 @@ def main():
     print("A_hat:\n", A_avg)
     print("Norm A", ((A - A_avg)**2).sum())
 
-    vis.plot_nees_comp(true_x, xs_kf, Ps_kf, xs_slr, Ps_slr)
-    # vis.plot_nees_and_2d_est(true_x,
-    #                          y,
-    #                          xf,
-    #                          Pf,
-    #                          xs,
-    #                          Ps,
-    #                          sigma_level=3,
-    #                          skip_cov=2)
+    #vis.plot_nees_comp(true_x, xs_kf, Ps_kf, xs_slr, Ps_slr)
+    vis.plot_nees_and_2d_est(true_x,
+                             y,
+                             xf_slr,
+                             Pf_slr,
+                             xs_slr,
+                             Ps_slr,
+                             sigma_level=3,
+                             skip_cov=2)
 
 
 def true_kf_param(A, b, Q, H, c, R, prior_mean, prior_cov, meas):

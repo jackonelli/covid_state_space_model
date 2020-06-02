@@ -1,11 +1,11 @@
 """Stochastic linear regression (SLR)"""
 import numpy as np
-from post_lin_smooth.slr.distributions import Gaussian, Conditional
+from post_lin_smooth.slr.distributions import Prior, Conditional
 
 
 class Slr:
     """SLR"""
-    def __init__(self, p_x: Gaussian, p_z_given_x: Conditional):
+    def __init__(self, p_x: Prior, p_z_given_x: Conditional):
         self.p_x = p_x
         self.p_z_given_x = p_z_given_x
 

@@ -3,7 +3,6 @@ from functools import partial
 import numpy as np
 import matplotlib.pyplot as plt
 from post_lin_smooth.iterative import iterative_post_lin_smooth
-from post_lin_smooth.filter_type.slr import SlrFilter
 from models import fhm
 from data.c19 import C19Data
 
@@ -18,7 +17,8 @@ def main():
                         p_ei=0.1,
                         p_er=0.1)
     num_initially_exposed = 3
-    reported_cases = get_measurements()
+    reported_cases = get_measurements(population_size)
+    prior = fhm.TruncGauss
     motion_model = fhm.Motion(params, population_size)
     meas_model = fhm.Meas(population_size)
     x_0 = np.array([
@@ -35,9 +35,10 @@ def main():
     xs, Ps = iterative_post_lin_smooth(measurements=reported_cases,
                                        prior_mean=x_0,
                                        prior_cov=P_0,
+                                       prior=prior,
                                        motion_model=motion_model,
                                        meas_model=meas_model,
-                                       num_samples=num_samples
+                                       num_samples=num_samples,
                                        num_iterations=num_iterations)
 
 
@@ -48,10 +49,10 @@ def plot_(true_states, meas, filtered_mean, filtered_cov):
     plt.show()
 
 
-def get_measurements():
-    c19_data = C19Data.from_json_file("../data/data.json")
-    reported_cases = c19_data.cases["y"]
-    return np.reshape(np.array(reported_cases), (len(reported_cases), 1))
+def get_measurements(population_size):
+    c19_data = C19Data.from_json_file("data/data.json")
+    reported_cases = np.array(c19_data.cases["y"]) / population_size
+    return np.reshape(reported_cases, (len(reported_cases), 1))
 
 
 if __name__ == "__main__":

@@ -13,8 +13,8 @@ The state is:
 from dataclasses import dataclass
 import numpy as np
 from scipy.stats import binom
-from post_lin_smooth.motion_models.interface import MotionModel
-from post_lin_smooth.slr.distributions import Conditional
+from scipy.stats import multivariate_normal as mvn
+from post_lin_smooth.slr.distributions import Prior, Conditional
 
 
 @dataclass
@@ -25,6 +25,25 @@ class Params:
     p_ei: float
     p_ei: float
     p_er: float
+
+
+class TruncGauss(Prior):
+    def __init__(self, x_bar, P):
+        self.x_bar = x_bar
+        self.P = P
+
+    def __str__(self):
+        return "TruncGauss: x_bar={}, P={}".format(self.x_bar, self.P)
+
+    def sample(self, num_samples):
+        successful_samples = 0
+        sample = np.zeros((num_samples, self.x_bar.shape[0]))
+        while successful_samples < num_samples:
+            candidate = mvn.rvs(mean=self.x_bar, cov=self.P)
+            if (candidate > 0).all():
+                sample[successful_samples, :] = candidate
+                successful_samples += 1
+        return sample / sample.sum(1, keepdims=True)
 
 
 class Motion(Conditional):
@@ -47,8 +66,7 @@ class Motion(Conditional):
         i_r_new = i_r + delta_i_r - delta_r_r
         r_new = r + delta_r_u + delta_r_r
         sample = normalize_state(
-            structure_state(s_new, e_new, i_u_new, i_r_new, r_new),
-            self.population_size)
+            structure_state(s_new, e_new, i_u_new, i_r_new, r_new))
         return sample
 
     def _delta_e(self, s, i_u, i_r):
@@ -93,7 +111,7 @@ def normalize_state(states):
         normalized states (N, D_x):
             (columns sum to 1)
     """
-    return states / states.sum(1)
+    return states / states.sum(1, keepdims=True)
 
 
 def denormalize_state(state, population_size: int):
