@@ -5,6 +5,15 @@ import matplotlib.pyplot as plt
 from analytics import nees
 
 
+def plot_nees_comp(true_x, x_1, P_1, x_2, P_2):
+    nees_1 = nees(true_x, x_1, P_1)
+    nees_2 = nees(true_x, x_2, P_2)
+    _, ax = plt.subplots()
+    ax.plot(nees_1, "-b", label="kf")
+    ax.plot(nees_2, "--g", label="slr")
+    plt.show()
+
+
 def plot_nees_and_2d_est(true_x,
                          meas,
                          xf,
@@ -15,6 +24,8 @@ def plot_nees_and_2d_est(true_x,
                          skip_cov=1):
     filter_nees = nees(true_x, xf, Pf)
     smooth_nees = nees(true_x, xs, Ps)
+    print("Filter NEES avg: {}".format(filter_nees.mean()))
+    print("Smooth NEES avg: {}".format(smooth_nees.mean()))
 
     _, (ax_1, ax_2) = plt.subplots(1, 2)
     ax_1.plot(filter_nees, "-b", label="filter")
@@ -26,11 +37,15 @@ def plot_nees_and_2d_est(true_x,
                       "b", skip_cov)
     plot_mean_and_cov(ax_2, xs[:, :2], Ps[:, :2, :2], sigma_level, "$x_s$",
                       "g", skip_cov)
+
+    ax_1.set_title("NEES")
     ax_1.set_xlabel("k")
     ax_1.set_ylabel(r"$\epsilon_{x, k}$")
+    ax_1.legend()
+
+    ax_2.set_title("Estimates")
     ax_2.set_xlabel("$pos_x$")
     ax_2.set_ylabel("$pos_y$")
-    ax_1.legend()
     ax_2.legend()
     plt.show()
 

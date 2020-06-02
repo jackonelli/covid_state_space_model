@@ -5,6 +5,16 @@ from post_lin_smooth.slr.distributions import Conditional
 
 
 class CoordTurn(Conditional):
+    """
+    state is
+        x_k = [
+            pos_x,
+            pos_y,
+        speedspeed,
+            phi,
+            omega
+        ]
+    """
     def __init__(self, sampling_period, process_noise):
         self.sampling_period = sampling_period
         self.process_noise = process_noise

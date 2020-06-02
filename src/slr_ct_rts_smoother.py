@@ -12,7 +12,7 @@ import visualization as vis
 
 def main():
     np.random.seed(0)
-    num_samples = 1000
+    num_samples = 20000
 
     # Motion model
     sampling_period = 0.1
@@ -37,7 +37,7 @@ def main():
     #K = 600
     #true_states, measurements = gen_dummy_data(K, sampling_period, meas_model,
     #                                           R)
-    range_ = (0, 77)
+    range_ = (0, 70)
     true_states, measurements = gen_tricky_data(meas_model, R, range_)
     cartes_meas = np.apply_along_axis(partial(to_cartesian_coords, pos=pos), 1,
                                       measurements)
@@ -47,9 +47,9 @@ def main():
     P_0 = np.diag(
         [10**2, 10**2, 10**2, (5 * np.pi / 180)**2, (1 * np.pi / 180)**2])
 
-    xs, Ps, xf, Pf = iterative_post_lin_smooth(measurements, x_0, P_0,
-                                               motion_model, meas_model,
-                                               num_samples, 1)
+    xs, Ps, xf, Pf, _ = iterative_post_lin_smooth(measurements, x_0, P_0,
+                                                  motion_model, meas_model,
+                                                  num_samples, 1)
 
     vis.plot_nees_and_2d_est(true_states[range_[0]:range_[1], :],
                              cartes_meas,
@@ -59,14 +59,6 @@ def main():
                              Ps[:, :2, :2],
                              sigma_level=3,
                              skip_cov=5)
-
-
-def plot_(true_states, meas, smooth_mean, filter_mean):
-    plt.plot(meas[:, 0], meas[:, 1], "r.")
-    plt.plot(true_states[:, 0], true_states[:, 1], "b-")
-    plt.plot(filter_mean[:, 0], filter_mean[:, 1], "r-")
-    plt.plot(smooth_mean[:, 0], smooth_mean[:, 1], "g-")
-    plt.show()
 
 
 def gen_tricky_data(meas_model, R, range_):
