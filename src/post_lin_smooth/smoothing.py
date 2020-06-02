@@ -1,11 +1,9 @@
 """Rauch-Tung-Striebel (RTS) smoothing"""
 import numpy as np
-from post_lin_smooth.slr.distributions import Conditional, Gaussian
-from post_lin_smooth.slr.slr import Slr
 
 
-def slr_rts_smoothing(filtered_means, filtered_covs, pred_means, pred_covs,
-                      linearizations):
+def rts_smoothing(filtered_means, filtered_covs, pred_means, pred_covs,
+                  linearizations):
     """Rauch-Tung-Striebel smoothing
     Smooths a measurement sequence and outputs from a Kalman filter.
 
@@ -32,8 +30,6 @@ def slr_rts_smoothing(filtered_means, filtered_covs, pred_means, pred_covs,
     smooth_means[-1, :] = smooth_mean
     smooth_covs[-1, :, :] = smooth_cov
     for k in np.flip(np.arange(K - 1)):
-        # Run filter iteration
-        print("Time step: ", k)
         linear_params = linearizations[k]
         smooth_mean, smooth_cov = _rts_update(smooth_mean, smooth_cov,
                                               filtered_means[k, :],
@@ -48,19 +44,7 @@ def slr_rts_smoothing(filtered_means, filtered_covs, pred_means, pred_covs,
 
 def _rts_update(xs_kplus1, Ps_kplus1, xf_k, Pf_k, xp_kplus1, Pp_kplus1,
                 linear_params):
-    """Non-linear Kalman filter prediction
-    calculates mean and covariance of predicted state density
-    using a non-linear Gaussian model.
-
-    Args:
-        prior_mean np.array(D_x): Prior mean
-        prior_cov np.array(D_x, D_x): Prior covariance
-        linear params tuple: (A, b, Q), linear params for timestep k.
-
-    Returns:
-       pred_mean np.array(D_x, D_x): predicted state mean
-       pred_cov np.array(D_x, D_x): predicted state covariance
-    """
+    """RTS update step"""
     A, b, Q = linear_params
 
     G_k = Pf_k @ A.T @ np.linalg.inv(Pp_kplus1)

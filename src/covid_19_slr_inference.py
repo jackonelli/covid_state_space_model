@@ -2,7 +2,7 @@
 from functools import partial
 import numpy as np
 import matplotlib.pyplot as plt
-from post_lin_smooth.filtering import slr_kalman_filter
+from post_lin_smooth.filtering import slr_kf
 from post_lin_smooth.smoothing import rts_smoothing
 from post_lin_smooth.filter_type.slr import SlrFilter
 from models import fhm
@@ -32,12 +32,12 @@ def main():
     print("x_0", x_0)
     print("P_0", P_0)
 
-    xf, Pf, xp, Pp = slr_kalman_filter(measurements=reported_cases,
-                                       prior_mean=x_0,
-                                       prior_cov=P_0,
-                                       motion_model=motion_model,
-                                       meas_model=meas_model,
-                                       num_samples=num_samples)
+    xf, Pf, xp, Pp = slr_kf(measurements=reported_cases,
+                            prior_mean=x_0,
+                            prior_cov=P_0,
+                            motion_model=motion_model,
+                            meas_model=meas_model,
+                            num_samples=num_samples)
 
 
 def plot_(true_states, meas, filtered_mean, filtered_cov):

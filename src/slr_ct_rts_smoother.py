@@ -3,8 +3,7 @@ from functools import partial
 import numpy as np
 from scipy.stats import multivariate_normal as mvn
 import matplotlib.pyplot as plt
-from post_lin_smooth.filtering import slr_kalman_filter
-from post_lin_smooth.smoothing import slr_rts_smoothing
+from post_lin_smooth.iterative import iterative_post_lin_smooth
 from models.range_bearing import to_cartesian_coords
 from models.coord_turn import CoordTurn
 from models.range_bearing import RangeBearing
@@ -47,18 +46,15 @@ def main():
     P_0 = np.diag(
         [10**2, 10**2, 10**2, (5 * np.pi / 180)**2, (1 * np.pi / 180)**2])
 
-    xf, Pf, xp, Pp, linearizations = slr_kalman_filter(measurements, x_0, P_0,
-                                                       motion_model,
-                                                       meas_model, num_samples)
-    xs, Ps = slr_rts_smoothing(xf, Pf, xp, Pp, linearizations)
-    plot_(true_states, cartes_meas, xf, Pf, xs, Ps)
+    xs, Ps = iterative_post_lin_smooth(measurements, x_0, P_0, motion_model,
+                                       meas_model, num_samples, 1)
+    plot_(true_states, cartes_meas, xs, Ps)
 
 
-def plot_(true_states, meas, filtered_mean, filtered_cov, smooth_mean,
-          smooth_cov):
+def plot_(true_states, meas, smooth_mean, smooth_cov):
     plt.plot(meas[:, 0], meas[:, 1], "r.")
     plt.plot(true_states[:, 0], true_states[:, 1], "b-")
-    plt.plot(filtered_mean[:, 0], filtered_mean[:, 1], "r-")
+    # plt.plot(filtered_mean[:, 0], filtered_mean[:, 1], "r-")
     plt.plot(smooth_mean[:, 0], smooth_mean[:, 1], "g-")
     plt.show()
 

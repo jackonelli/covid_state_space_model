@@ -1,10 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.stats import multivariate_normal as mvn
-from post_lin_smooth.filtering import slr_kalman_filter
-from post_lin_smooth.smoothing import slr_rts_smoothing
-from post_lin_smooth.slr.slr import Slr, _bar
-from post_lin_smooth.slr.distributions import Gaussian
+from post_lin_smooth.iterative import iterative_post_lin_smooth
 from models.affine import Affine
 from slr_debug import plot_sigma_level
 
@@ -46,21 +43,17 @@ def true_kf_param(A, b, Q, H, c, R, prior_mean, prior_cov, meas):
 def test_slr_kf_filter(true_x, y, prior_mean, prior_cov, motion_model,
                        meas_model, num_samples):
     print("\nFILTERING\n")
-    xf, Pf, xp, Pp, linearizations = slr_kalman_filter(y, prior_mean,
-                                                       prior_cov, motion_model,
-                                                       meas_model, num_samples)
-
-    print("\nSMOOTHING\n")
-    xs, Ps = slr_rts_smoothing(xf, Pf, xp, Pp, linearizations)
+    xs, Ps = iterative_post_lin_smooth(y, prior_mean, prior_cov, motion_model,
+                                       meas_model, num_samples, 1)
     fig, ax = plt.subplots()
-    plot_filtered(ax, true_x, y, xf, Pf, xs)
+    plot_filtered(ax, true_x, y, xs)
     ax.legend()
     plt.show()
 
 
-def plot_filtered(ax, true_x, meas, xf, Pf, xs):
+def plot_filtered(ax, true_x, meas, xs):
     plot_states_meas(ax, true_x, meas)
-    ax.plot(xf[:, 0], xf[:, 1], "r-", label="x_f")
+    # ax.plot(xf[:, 0], xf[:, 1], "r-", label="x_f")
     ax.plot(xs[:, 0], xs[:, 1], "g-", label="x_s")
 
 

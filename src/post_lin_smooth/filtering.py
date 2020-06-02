@@ -4,25 +4,26 @@ from post_lin_smooth.slr.distributions import Gaussian, Conditional
 from post_lin_smooth.slr.slr import Slr
 
 
-def slr_kalman_filter(measurements, prior_mean, prior_cov,
-                      motion_model: Conditional, meas_model: Conditional,
-                      num_samples):
-    """SLR Kalman filter
-    Filters a measurement sequence using a non-linear Kalman filter.
+def slr_kf(measurements, prior_mean, prior_cov, motion_model: Conditional,
+           meas_model: Conditional, num_samples: int):
+    """SLR Kalman filter with SLR linearization
+    Filters a measurement sequence using a linear Kalman filter.
+    Linearization is done with SLR
     Args:
         measurements np.array(K, D_y): Measurement sequence for times 1,..., K
         prior_mean np.array(D_x,): Prior mean for time 0
         prior_cov np.array(D_x, D_x): Prior covariance
-        motion_model:
-        process_noise_cov np.array(D_x, D_x): Process noise covariance
-        meas_model:
-        meas_noise_cov np.array(D_y, D_y): Measurement noise covariance
+        motion_model
+        meas_model
+        num_samples
 
     Returns:
         filtered_means np.array(K, D_x): Filtered estimates for times 1,..., K
         filtered_cov np.array(K, D_x, D_x): Filter error covariance
         pred_means np.array(): Predicted estimates for times 1,..., K
         pred_cov np.array(): Filter error covariance
+        linearizations List(np.array, np.array, np.array):
+            List of tuples (A, b, Q), param's for linear approx
     """
 
     K = measurements.shape[0]
@@ -34,7 +35,6 @@ def slr_kalman_filter(measurements, prior_mean, prior_cov,
     pred_covs = np.zeros((K, dim_x, dim_x))
     linearizations = [None] * K
     for k in range(K):
-        print("Time step: ", k)
         meas = measurements[k, :]
 
         pred_mean, pred_cov, A, b, Q = _predict(prior_mean, prior_cov,
@@ -53,8 +53,43 @@ def slr_kalman_filter(measurements, prior_mean, prior_cov,
     return filtered_means, filtered_cov, pred_means, pred_covs, linearizations
 
 
+def slr_kf_known_priors(measurements, prev_smooth_means, prev_smooth_covs,
+                        motion_model: Conditional, meas_model: Conditional,
+                        num_samples: int):
+
+    K = measurements.shape[0]
+    dim_x = prev_smooth_means.shape[1]
+
+    filtered_means = np.zeros((K, dim_x))
+    filtered_cov = np.zeros((K, dim_x, dim_x))
+    pred_means = np.zeros((K, dim_x))
+    pred_covs = np.zeros((K, dim_x, dim_x))
+    linearizations = [None] * K
+    for k in range(K):
+        meas = measurements[k, :]
+        prior_mean = prev_smooth_means[k, :]
+        prior_cov = prev_smooth_covs[k, :, :]
+
+        pred_mean, pred_cov, A, b, Q = _predict(prior_mean, prior_cov,
+                                                motion_model, num_samples)
+
+        updated_mean, updated_cov = _update(meas, pred_mean, pred_cov,
+                                            meas_model, num_samples)
+
+        linearizations[k] = (A, b, Q)
+        pred_means[k, :] = pred_mean
+        pred_covs[k, :, :] = pred_cov
+        filtered_means[k, :] = updated_mean
+        filtered_cov[k, :, :] = updated_cov
+    return filtered_means, filtered_cov, pred_means, pred_covs, linearizations
+
+
 def _predict(prior_mean, prior_cov, motion_model: Conditional,
              num_samples: int):
+    """KF prediction step
+        linearizations List(np.array, np.array, np.array):
+            List of tuples (A, b, Q), param's for linear approx
+    """
     slr = Slr(Gaussian(x_bar=prior_mean, P=prior_cov), motion_model)
     A, b, Q = slr.linear_parameters(num_samples)
     pred_mean = A @ prior_mean + b
@@ -64,6 +99,7 @@ def _predict(prior_mean, prior_cov, motion_model: Conditional,
 
 def _update(meas, pred_mean, pred_cov, meas_model: Conditional,
             num_samples: int):
+    """KF update step"""
     slr = Slr(Gaussian(x_bar=pred_mean, P=pred_cov), meas_model)
     H, c, R = slr.linear_parameters(num_samples)
     meas_mean = H @ pred_mean + c
