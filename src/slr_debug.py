@@ -48,23 +48,5 @@ def plot_state(ax, x_sample, z_sample):
     ax.plot(z_sample[:, 0], z_sample[:, 1], "r*")
 
 
-def plot_sigma_level(ax, mean, cov, level, resolution, label):
-    ellips = ellips_points(mean, cov, level, resolution)
-    ax.plot(ellips[:, 0],
-            ellips[:, 1],
-            "--",
-            label=r"{} (${} \sigma$)".format(label, level))
-
-
-def ellips_points(center, transf, scale, resolution):
-    """Transform the circle to the sought ellipse"""
-    angles = np.linspace(0, 2 * np.pi, resolution)
-    curve_parameter = np.row_stack((np.cos(angles), np.sin(angles)))
-
-    level_sigma_offsets = scale * sqrtm(transf) @ curve_parameter
-
-    return center + level_sigma_offsets.T
-
-
 if __name__ == "__main__":
     main()

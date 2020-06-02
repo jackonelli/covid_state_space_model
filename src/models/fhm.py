@@ -80,8 +80,20 @@ class Meas(Conditional):
         return np.reshape(i_r, (i_r.shape[0], 1))
 
 
-def normalize_state(states, population_size):
-    return states / population_size
+def normalize_state(states):
+    """Normalize multiple states at once
+    This works for both states represented in full population
+    and states represented with portion of population
+    N = number of states
+    D_x = state dimension
+
+    Args:
+        states (N, D_x)
+    Returns
+        normalized states (N, D_x):
+            (columns sum to 1)
+    """
+    return states / states.sum(1)
 
 
 def denormalize_state(state, population_size: int):

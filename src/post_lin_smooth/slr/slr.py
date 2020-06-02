@@ -53,7 +53,7 @@ class Slr:
         Returns:
             Psi (D_x, D_z)
         """
-        sample_size, x_dim = x_sample.shape
+        sample_size = x_sample.shape[0]
         x_diff = x_sample - self.p_x.x_bar
         z_diff = z_sample - z_bar
         cov = (x_diff.T @ z_diff)
@@ -76,29 +76,6 @@ class Slr:
         sample_size = z_sample.shape[0]
         z_diff = z_sample - z_bar
         return z_diff.T @ z_diff / sample_size
-
-
-import time
-import matplotlib.pyplot as plt
-from models.range_bearing import to_cartesian_coords
-
-
-def plot_state(states):
-    plt.plot(states[:, 0], states[:, 1], "r*")
-    plt.show()
-    time.sleep(1)
-
-
-def plot_meas(meas):
-    cartes_meas = np.apply_along_axis(
-        lambda x: to_cartesian_coords(x, pos=np.array([280, -140])), 1, meas)
-    plot_state(cartes_meas)
-
-
-def plot_corr(x_sample, z_sample):
-    plt.plot(x_sample[:, 1], z_sample[:, 1], "r*")
-    plt.show()
-    time.sleep(1)
 
 
 def _bar(sample):

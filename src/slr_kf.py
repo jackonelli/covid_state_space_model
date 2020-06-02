@@ -3,12 +3,13 @@ import matplotlib.pyplot as plt
 from scipy.stats import multivariate_normal as mvn
 from post_lin_smooth.iterative import iterative_post_lin_smooth
 from models.affine import Affine
-from slr_debug import plot_sigma_level
+from analytics import nees
+import visualization as vis
 
 
 def main():
     prior_mean = np.array([1, 1, 3, 2])
-    prior_cov = 1 * np.eye(4)
+    prior_cov = 5 * np.eye(4)
     T = 1
     A = np.array([[1, 0, T, 0], [0, 1, 0, T], [0, 0, 1, 0], [0, 0, 0, 1]])
     b = 0 * np.ones((4, ))
@@ -43,17 +44,23 @@ def true_kf_param(A, b, Q, H, c, R, prior_mean, prior_cov, meas):
 def test_slr_kf_filter(true_x, y, prior_mean, prior_cov, motion_model,
                        meas_model, num_samples):
     print("\nFILTERING\n")
-    xs, Ps = iterative_post_lin_smooth(y, prior_mean, prior_cov, motion_model,
-                                       meas_model, num_samples, 1)
-    fig, ax = plt.subplots()
-    plot_filtered(ax, true_x, y, xs)
-    ax.legend()
-    plt.show()
+    xs, Ps, xf, Pf = iterative_post_lin_smooth(y, prior_mean, prior_cov,
+                                               motion_model, meas_model,
+                                               num_samples, 1)
+
+    vis.plot_nees_and_2d_est(true_x,
+                             y,
+                             xf,
+                             Pf,
+                             xs,
+                             Ps,
+                             sigma_level=3,
+                             skip_cov=2)
 
 
-def plot_filtered(ax, true_x, meas, xs):
+def plot_filtered(ax, true_x, meas, xf, Pf, xs, Ps):
     plot_states_meas(ax, true_x, meas)
-    # ax.plot(xf[:, 0], xf[:, 1], "r-", label="x_f")
+    ax.plot(xf[:, 0], xf[:, 1], "r-", label="x_f")
     ax.plot(xs[:, 0], xs[:, 1], "g-", label="x_s")
 
 

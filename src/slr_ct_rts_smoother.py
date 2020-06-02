@@ -7,9 +7,11 @@ from post_lin_smooth.iterative import iterative_post_lin_smooth
 from models.range_bearing import to_cartesian_coords
 from models.coord_turn import CoordTurn
 from models.range_bearing import RangeBearing
+import visualization as vis
 
 
 def main():
+    np.random.seed(0)
     num_samples = 1000
 
     # Motion model
@@ -26,7 +28,7 @@ def main():
     # Meas model
     pos = np.array([100, -100])
     sigma_r = 1
-    sigma_phi = 0.5 * np.pi / 180
+    sigma_phi = .5 * np.pi / 180
 
     R = np.diag([sigma_r**2, sigma_phi**2])
     meas_model = RangeBearing(pos, R)
@@ -35,7 +37,7 @@ def main():
     #K = 600
     #true_states, measurements = gen_dummy_data(K, sampling_period, meas_model,
     #                                           R)
-    range_ = (0, 100)
+    range_ = (0, 77)
     true_states, measurements = gen_tricky_data(meas_model, R, range_)
     cartes_meas = np.apply_along_axis(partial(to_cartesian_coords, pos=pos), 1,
                                       measurements)
@@ -43,17 +45,26 @@ def main():
     # Prior distr.
     x_0 = np.array([4.4, 0, 4, 0, 0])
     P_0 = np.diag(
-        [2**2, 2**2, 2**2, (5 * np.pi / 180)**2, (1 * np.pi / 180)**2])
+        [10**2, 10**2, 10**2, (5 * np.pi / 180)**2, (1 * np.pi / 180)**2])
 
-    xs, Ps = iterative_post_lin_smooth(measurements, x_0, P_0, motion_model,
-                                       meas_model, num_samples, 2)
-    plot_(true_states, cartes_meas, xs, Ps)
+    xs, Ps, xf, Pf = iterative_post_lin_smooth(measurements, x_0, P_0,
+                                               motion_model, meas_model,
+                                               num_samples, 1)
+
+    vis.plot_nees_and_2d_est(true_states[range_[0]:range_[1], :],
+                             cartes_meas,
+                             xf[:, :2],
+                             Pf[:, :2, :2],
+                             xs[:, :2],
+                             Ps[:, :2, :2],
+                             sigma_level=3,
+                             skip_cov=5)
 
 
-def plot_(true_states, meas, smooth_mean, smooth_cov):
+def plot_(true_states, meas, smooth_mean, filter_mean):
     plt.plot(meas[:, 0], meas[:, 1], "r.")
     plt.plot(true_states[:, 0], true_states[:, 1], "b-")
-    # plt.plot(filtered_mean[:, 0], filtered_mean[:, 1], "r-")
+    plt.plot(filter_mean[:, 0], filter_mean[:, 1], "r-")
     plt.plot(smooth_mean[:, 0], smooth_mean[:, 1], "g-")
     plt.show()
 

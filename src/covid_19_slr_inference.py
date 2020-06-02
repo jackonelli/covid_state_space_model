@@ -2,15 +2,15 @@
 from functools import partial
 import numpy as np
 import matplotlib.pyplot as plt
-from post_lin_smooth.filtering import slr_kf
-from post_lin_smooth.smoothing import rts_smoothing
+from post_lin_smooth.iterative import iterative_post_lin_smooth
 from post_lin_smooth.filter_type.slr import SlrFilter
 from models import fhm
 from data.c19 import C19Data
 
 
 def main():
-    num_samples = 10
+    num_samples = 1000
+    num_iterations = 3
     population_size = 1e7
     params = fhm.Params(b=0.3 / population_size,
                         q=0.1,
@@ -32,12 +32,13 @@ def main():
     print("x_0", x_0)
     print("P_0", P_0)
 
-    xf, Pf, xp, Pp = slr_kf(measurements=reported_cases,
-                            prior_mean=x_0,
-                            prior_cov=P_0,
-                            motion_model=motion_model,
-                            meas_model=meas_model,
-                            num_samples=num_samples)
+    xs, Ps = iterative_post_lin_smooth(measurements=reported_cases,
+                                       prior_mean=x_0,
+                                       prior_cov=P_0,
+                                       motion_model=motion_model,
+                                       meas_model=meas_model,
+                                       num_samples=num_samples
+                                       num_iterations=num_iterations)
 
 
 def plot_(true_states, meas, filtered_mean, filtered_cov):
