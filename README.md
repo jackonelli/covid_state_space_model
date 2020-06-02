@@ -20,6 +20,6 @@ python src/c19_se.py --output-file <name-of_data-file>.json
 
 ### TODO
 
-- CT test with tricky data, increased noise. Create situation where iterations are required.
-- Iterative version of SLR smoothing.
+- ~Setup CT test with tricky data, increased noise. Create situation where iterations are required.~
+- ~Iterative version of SLR smoothing.~
 - Truncated sampling for FHM model(s)
