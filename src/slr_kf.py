@@ -12,7 +12,7 @@ import visualization as vis
 
 def main():
     num_samples = 20000
-    num_iterations = 10
+    num_iterations = 5
 
     prior_mean = np.array([1, 1, 3, 2])
     prior_cov = 1 * np.eye(4)

@@ -1,5 +1,6 @@
 """Rauch-Tung-Striebel (RTS) smoothing"""
 import numpy as np
+from analytics import is_pos_def
 
 
 def rts_smoothing(filtered_means, filtered_covs, pred_means, pred_covs,
@@ -37,6 +38,8 @@ def rts_smoothing(filtered_means, filtered_covs, pred_means, pred_covs,
                                               pred_means[k + 1, :],
                                               pred_covs[k + 1, :, :],
                                               linear_params)
+        if not is_pos_def(smooth_cov):
+            raise ValueError("Smooth cov not pos def")
         smooth_means[k, :] = smooth_mean
         smooth_covs[k, :, :] = smooth_cov
     return smooth_means, smooth_covs
@@ -50,4 +53,5 @@ def _rts_update(xs_kplus1, Ps_kplus1, xf_k, Pf_k, xp_kplus1, Pp_kplus1,
     G_k = Pf_k @ A.T @ np.linalg.inv(Pp_kplus1)
     xs_k = xf_k + G_k @ (xs_kplus1 - xp_kplus1)
     Ps_k = Pf_k + G_k @ (Ps_kplus1 - Pp_kplus1) @ G_k.T
+    Ps_k = (Ps_k + Ps_k.T) / 2
     return xs_k, Ps_k

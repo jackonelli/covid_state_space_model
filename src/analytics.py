@@ -18,9 +18,16 @@ def nees(true, est, cov):
     """
     K, D_x = true.shape
     err = (true - est)
-    nees = np.zeros((K, 1))
-    for k in np.arange(K):
-        err_k = err[k, :].reshape((D_x, 1))
-        P_inv_k = np.linalg.inv(cov[k, :, :])
-        nees[k] = err_k.T @ P_inv_k @ err_k
+    nees = np.empty((K, 1))
+    for k, (err_k, cov_k) in enumerate(zip(err, cov)):
+        err_k = err_k.reshape((D_x, 1))
+        nees[k] = _single_nees(err_k, cov_k)
     return nees
+
+
+def _single_nees(err, cov):
+    return err.T @ np.linalg.inv(cov) @ err
+
+
+def is_pos_def(x):
+    return np.all(np.linalg.eigvals(x) > 0)
