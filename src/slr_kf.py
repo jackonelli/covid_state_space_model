@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.stats import multivariate_normal as mvn
 from post_lin_smooth.iterative import iterative_post_lin_smooth
-from post_lin_smooth.filtering import analytical_kf
+from post_lin_smooth.filtering import analytical_kf, analytical_kf_known_priors
 from post_lin_smooth.smoothing import rts_smoothing
 from post_lin_smooth.slr.distributions import Gaussian
 from models.affine import Affine
@@ -36,36 +36,41 @@ def main():
     true_x = gen_linear_state_seq(prior_mean, prior_cov, A, Q, K)
     y = gen_linear_meas_seq(true_x, H, R)
 
-    (xs_slr, Ps_slr, xf_slr, Pf_slr,
-     linearizations) = iterative_post_lin_smooth(y, prior_mean, prior_cov,
-                                                 prior, motion_model,
-                                                 meas_model, num_samples,
-                                                 num_iterations)
+    # (xs_slr, Ps_slr, xf_slr, Pf_slr,
+    #  linearizations) = iterative_post_lin_smooth(y, prior_mean, prior_cov,
+    #                                              prior, motion_model,
+    #                                              meas_model, num_samples,
+    #                                              num_iterations)
 
-    x_kf, P_kf, xp_kf, Pp_kf = analytical_kf(y, prior_mean, prior_cov,
-                                             (A, b, Q), (H, c, R))
+    xf_kf, Pf_kf, xp_kf, Pp_kf = analytical_kf(y, prior_mean, prior_cov,
+                                               (A, b, Q), (H, c, R))
     lin = [(A, b, Q)] * K
-    xs_kf, Ps_kf = rts_smoothing(x_kf, P_kf, xp_kf, Pp_kf, lin)
+    xs_kf, Ps_kf = rts_smoothing(xf_kf, Pf_kf, xp_kf, Pp_kf, lin)
 
-    A_avg = np.zeros(A.shape)
-    b_avg = np.zeros(b.shape)
-    Q_avg = np.zeros(Q.shape)
-    for lin in linearizations:
-        A_k, b_k, Q_k = lin
-        A_avg += A_k / K
-        b_avg += b_k / K
-        Q_avg += Q_k / K
-    print("A:\n", A)
-    print("A_hat:\n", A_avg)
-    print("Norm A", ((A - A_avg)**2).sum())
+    xf_kf, Pf_kf, xp_kf, Pp_kf = analytical_kf_known_priors(
+        y, xs_kf, Ps_kf, (A, b, Q), (H, c, R))
+
+    xs_kf, Ps_kf = rts_smoothing(xf_kf, Pf_kf, xp_kf, Pp_kf, lin)
+
+    # A_avg = np.zeros(A.shape)
+    # b_avg = np.zeros(b.shape)
+    # Q_avg = np.zeros(Q.shape)
+    # for lin in linearizations:
+    #     A_k, b_k, Q_k = lin
+    #     A_avg += A_k / K
+    #     b_avg += b_k / K
+    #     Q_avg += Q_k / K
+    # print("A:\n", A)
+    # print("A_hat:\n", A_avg)
+    # print("Norm A", ((A - A_avg)**2).sum())
 
     #vis.plot_nees_comp(true_x, xs_kf, Ps_kf, xs_slr, Ps_slr)
     vis.plot_nees_and_2d_est(true_x,
                              y,
-                             xf_slr,
-                             Pf_slr,
-                             xs_slr,
-                             Ps_slr,
+                             xf_kf,
+                             Pf_kf,
+                             xs_kf,
+                             Ps_kf,
                              sigma_level=3,
                              skip_cov=2)
 
