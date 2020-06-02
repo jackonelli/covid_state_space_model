@@ -32,22 +32,21 @@ def main():
     meas_model = RangeBearing(pos, R)
 
     # Generate data
-    # K = 600
-    # true_states, measurements = gen_dummy_data(K, sampling_period, meas_model,
-    #                                            R)
-    true_states, measurements = gen_tricky_data(meas_model, R)
-    cartes_meas = np.array(
-        [to_cartesian_coords(meas, pos) for meas in measurements])
+    #K = 600
+    #true_states, measurements = gen_dummy_data(K, sampling_period, meas_model,
+    #                                           R)
+    range_ = (0, 100)
+    true_states, measurements = gen_tricky_data(meas_model, R, range_)
     cartes_meas = np.apply_along_axis(partial(to_cartesian_coords, pos=pos), 1,
                                       measurements)
 
     # Prior distr.
-    x_0 = np.zeros((5, ))
+    x_0 = np.array([4.4, 0, 4, 0, 0])
     P_0 = np.diag(
-        [10**2, 10**2, 10**2, (5 * np.pi / 180)**2, (1 * np.pi / 180)**2])
+        [2**2, 2**2, 2**2, (5 * np.pi / 180)**2, (1 * np.pi / 180)**2])
 
     xs, Ps = iterative_post_lin_smooth(measurements, x_0, P_0, motion_model,
-                                       meas_model, num_samples, 1)
+                                       meas_model, num_samples, 2)
     plot_(true_states, cartes_meas, xs, Ps)
 
 
@@ -59,9 +58,11 @@ def plot_(true_states, meas, smooth_mean, smooth_cov):
     plt.show()
 
 
-def gen_tricky_data(meas_model, R):
+def gen_tricky_data(meas_model, R, range_):
     true_states = np.loadtxt("ct_data.csv")
-    return true_states, gen_non_lin_meas(true_states, meas_model, R)
+    start, stop = range_
+    return true_states, gen_non_lin_meas(true_states[start:stop, :],
+                                         meas_model, R)
 
 
 def gen_dummy_data(num_samples, sampling_period, meas_model, R):
