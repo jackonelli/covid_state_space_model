@@ -3,41 +3,37 @@ import numpy as np
 from analytics import is_pos_def
 
 
-def rts_smoothing(filtered_means, filtered_covs, pred_means, pred_covs,
+def rts_smoothing(filter_means, filter_covs, pred_means, pred_covs,
                   linearizations):
     """Rauch-Tung-Striebel smoothing
     Smooths a measurement sequence and outputs from a Kalman filter.
 
     Args:
-        filtered_means np.array(): Filtered estimates for times 1,..., K
-        filtered_covs np.array(): Filter error covariance
-        pred_means np.array(): Predicted estimates for times 1,..., K
-        pred_covs np.array(): Filter error covariance
+        filter_means (K, D_x): Filtered estimates for times 1,..., K
+        filter_covs (K, D_x, D_x): Filter error covariance
+        pred_means (K, D_x): Predicted estimates for times 1,..., K
+        pred_covs (K, D_x, D_x): Filter error covariance
         linearizations List(np.array, np.array, np.array):
             List of tuples (A, b, Q), param's for linear approx
 
     Returns:
-        smooth_means np.array(): Smooth estimates for times 1,..., K
-        smooth_covs np.array(): Smooth error covariance
+        smooth_means (K, D_x): Smooth estimates for times 1,..., K
+        smooth_covs (K, D_x, D_x): Smooth error covariance
     """
 
-    K, dim_x = filtered_means.shape
+    K, D_x = filter_means.shape
 
-    # Allocation
-    smooth_means = np.zeros((K, dim_x))
-    smooth_covs = np.zeros((K, dim_x, dim_x))
-    smooth_mean = filtered_means[-1, :]
-    smooth_cov = filtered_covs[-1, :, :]
+    smooth_means = np.zeros((K, D_x))
+    smooth_covs = np.zeros((K, D_x, D_x))
+    smooth_mean = filter_means[-1, :]
+    smooth_cov = filter_covs[-1, :, :]
     smooth_means[-1, :] = smooth_mean
     smooth_covs[-1, :, :] = smooth_cov
     for k in np.flip(np.arange(K - 1)):
         linear_params = linearizations[k]
-        smooth_mean, smooth_cov = _rts_update(smooth_mean, smooth_cov,
-                                              filtered_means[k, :],
-                                              filtered_covs[k, :, :],
-                                              pred_means[k + 1, :],
-                                              pred_covs[k + 1, :, :],
-                                              linear_params)
+        smooth_mean, smooth_cov = _rts_update(
+            smooth_mean, smooth_cov, filter_means[k, :], filter_covs[k, :, :],
+            pred_means[k + 1, :], pred_covs[k + 1, :, :], linear_params)
         if not is_pos_def(smooth_cov):
             raise ValueError("Smooth cov not pos def")
         smooth_means[k, :] = smooth_mean
