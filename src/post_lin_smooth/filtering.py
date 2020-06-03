@@ -26,7 +26,7 @@ def slr_kf(measurements,
 
     Returns:
         filter_means (K, D_x): Filtered estimates for times 1,..., K
-        filter_cov (K, D_x, D_x): Filter error covariance
+        filter_covs (K, D_x, D_x): Filter error covariance
         pred_means (K, D_x): Predicted estimates for times 1,..., K
         pred_cov (K, D_x, D_x): Filter error covariance
         linearizations List(np.array, np.array, np.array):
@@ -34,34 +34,35 @@ def slr_kf(measurements,
     """
 
     K = measurements.shape[0]
-    dim_x = prior_mean.shape[0]
 
-    filter_means = np.empty((K, dim_x))
-    filter_cov = np.empty((K, dim_x, dim_x))
-    pred_means = np.empty((K, dim_x))
-    pred_covs = np.empty((K, dim_x, dim_x))
+    filter_means, filter_covs = _init_estimates(prior_mean, prior_cov, K)
+    pred_means, pred_covs = _init_estimates(prior_mean, prior_cov, K)
     linearizations = [None] * K
-    for k, meas in enumerate(measurements):
+    for k in np.arange(1, K + 1):
+        # measurment vec is zero-indexed
+        # this really gives y_k
+        meas_k = measurements[k - 1]
         print("Time step: ", k)
-
         slr = Slr(prior(x_bar=prior_mean, P=prior_cov), motion_model)
         motion_lin = slr.linear_parameters(num_samples)
         pred_mean, pred_cov = _predict(prior_mean, prior_cov, motion_lin)
 
         slr = Slr(prior(x_bar=pred_mean, P=pred_cov), meas_model)
         meas_lin = slr.linear_parameters(num_samples)
-        updated_mean, updated_cov = _update(meas, pred_mean, pred_cov,
+        updated_mean, updated_cov = _update(meas_k, pred_mean, pred_cov,
                                             meas_lin)
 
-        linearizations[k] = motion_lin
+        # linearization list is zero-indexed
+        # this really gives (A_k, b_k, Sigma_k)
+        linearizations[k - 1] = motion_lin
         pred_means[k, :] = pred_mean
         pred_covs[k, :, :] = pred_cov
         filter_means[k, :] = updated_mean
-        filter_cov[k, :, :] = updated_cov
+        filter_covs[k, :, :] = updated_cov
         prior_mean = updated_mean
         prior_cov = updated_cov
 
-    return filter_means, filter_cov, pred_means, pred_covs, linearizations
+    return filter_means, filter_covs, pred_means, pred_covs, linearizations
 
 
 def slr_kf_known_priors(measurements,
@@ -75,38 +76,47 @@ def slr_kf_known_priors(measurements,
                         num_samples: int):
 
     K = measurements.shape[0]
-    dim_x = prev_smooth_means.shape[1]
 
-    filter_means = np.empty((K, dim_x))
-    filter_cov = np.empty((K, dim_x, dim_x))
-    pred_means = np.empty((K, dim_x))
-    pred_covs = np.empty((K, dim_x, dim_x))
+    filter_means, filter_covs = _init_estimates(prior_mean, prior_cov, K)
+    pred_means, pred_covs = _init_estimates(prior_mean, prior_cov, K)
     linearizations = [None] * K
-    for k, meas in enumerate(measurements):
+    for k in np.arange(1, K + 1):
+        # measurment vec is zero-indexed
+        # this really gives y_k
+        meas_k = measurements[k - 1]
         print("Time step: ", k)
-        print("Smooth gaussian p(x) cov is pos def:", pos_def_check(prev_smooth_covs[k, :, :], False))
+        print("Smooth gaussian p(x) cov is pos def:", pos_def_check(prev_smooth_covs[k-1, :, :], False))
         slr = Slr(
-            prior(x_bar=prev_smooth_means[k, :], P=prev_smooth_covs[k, :, :]),
+            prior(x_bar=prev_smooth_means[k-1, :], P=prev_smooth_covs[k-1, :, :]),
             motion_model)
         motion_lin = slr.linear_parameters(num_samples)
         pred_mean, pred_cov = _predict(prior_mean, prior_cov, motion_lin)
         print("Pred cov is pos def: {}".format(pos_def_ratio([pred_cov])))
 
-        slr = Slr(prior(x_bar=pred_mean, P=pred_cov), meas_model)
+        slr = Slr(prior(x_bar=prev_smooth_means[k, :], P=prev_smooth_covs[k, :, :]), meas_model)
         meas_lin = slr.linear_parameters(num_samples)
-        updated_mean, updated_cov = _update(meas, pred_mean, pred_cov,
+        updated_mean, updated_cov = _update(meas_k, pred_mean, pred_cov,
                                             meas_lin)
         print("Updated cov is pos def: {}".format(pos_def_ratio([updated_cov
                                                                  ])))
         prior_mean = updated_mean
         prior_cov = updated_cov
 
-        linearizations[k] = motion_lin
+        linearizations[k - 1] = motion_lin
         pred_means[k, :] = pred_mean
         pred_covs[k, :, :] = pred_cov
         filter_means[k, :] = updated_mean
-        filter_cov[k, :, :] = updated_cov
-    return filter_means, filter_cov, pred_means, pred_covs, linearizations
+        filter_covs[k, :, :] = updated_cov
+    return filter_means, filter_covs, pred_means, pred_covs, linearizations
+
+
+def _init_estimates(prior_mean, prior_cov, K):
+    D_x = prior_mean.shape[0]
+    est_means = np.empty((K + 1, D_x))
+    est_covs = np.empty((K + 1, D_x, D_x))
+    est_means[0, :] = prior_mean
+    est_covs[0, :, :] = prior_cov
+    return est_means, est_covs
 
 
 def analytical_kf(measurements, prior_mean, prior_cov, motion_lin, meas_lin):
@@ -123,7 +133,7 @@ def analytical_kf(measurements, prior_mean, prior_cov, motion_lin, meas_lin):
 
     Returns:
         filter_means np.array(K, D_x): Filtered estimates for times 1,..., K
-        filter_cov np.array(K, D_x, D_x): Filter error covariance
+        filter_covs np.array(K, D_x, D_x): Filter error covariance
         pred_means np.array(): Predicted estimates for times 1,..., K
         pred_cov np.array(): Filter error covariance
         linearizations List(np.array, np.array, np.array):
@@ -131,12 +141,12 @@ def analytical_kf(measurements, prior_mean, prior_cov, motion_lin, meas_lin):
     """
 
     K = measurements.shape[0]
-    dim_x = prior_mean.shape[0]
+    D_x = prior_mean.shape[0]
 
-    filter_means = np.empty((K, dim_x))
-    filter_cov = np.empty((K, dim_x, dim_x))
-    pred_means = np.empty((K, dim_x))
-    pred_covs = np.empty((K, dim_x, dim_x))
+    filter_means = np.empty((K, D_x))
+    filter_covs = np.empty((K, D_x, D_x))
+    pred_means = np.empty((K, D_x))
+    pred_covs = np.empty((K, D_x, D_x))
     for k, meas in enumerate(measurements):
         pred_mean, pred_cov = _predict(prior_mean, prior_cov, motion_lin)
 
@@ -146,10 +156,10 @@ def analytical_kf(measurements, prior_mean, prior_cov, motion_lin, meas_lin):
         pred_means[k, :] = pred_mean
         pred_covs[k, :, :] = pred_cov
         filter_means[k, :] = updated_mean
-        filter_cov[k, :, :] = updated_cov
+        filter_covs[k, :, :] = updated_cov
         prior_mean = updated_mean
         prior_cov = updated_cov
-    return filter_means, filter_cov, pred_means, pred_covs
+    return filter_means, filter_covs, pred_means, pred_covs
 
 
 def _predict(prior_mean, prior_cov, linearization):

@@ -12,7 +12,7 @@ import visualization as vis
 def main():
     num_samples = 20000
     K = 20
-    num_iterations = 20
+    num_iterations = 1
 
     prior_mean = np.array([1, 1, 3, 2])
     prior_cov = 1 * np.eye(4)
@@ -20,10 +20,22 @@ def main():
     A = np.array([[1, 0, T, 0], [0, 1, 0, T], [0, 0, 1, 0], [0, 0, 0, 1]])
     b = 0 * np.ones((4, ))
     Q = np.array([
-        [0, 0, 0, 0],
-        [0, 0, 0, 0],
-        [0, 0, 1.5, 0],
-        [0, 0, 0, 1.5],
+        [0,
+         0,
+         0,
+         0],
+        [0,
+         0,
+         0,
+         0],
+        [0,
+         0,
+         1.5,
+         0],
+        [0,
+         0,
+         0,
+         1.5],
     ])
     H = np.array([[1, 0, 0, 0], [0, 1, 0, 0]])
     c = np.zeros((H @ prior_mean).shape)
@@ -35,10 +47,17 @@ def main():
     true_x = gen_linear_state_seq(prior_mean, prior_cov, A, Q, K)
     y = gen_linear_meas_seq(true_x, H, R)
 
-    (xs_slr, Ps_slr, xf_slr, Pf_slr,
-     linearizations) = iterative_post_lin_smooth(y, prior_mean, prior_cov,
-                                                 prior, motion_model,
-                                                 meas_model, num_samples,
+    (xs_slr,
+     Ps_slr,
+     xf_slr,
+     Pf_slr,
+     linearizations) = iterative_post_lin_smooth(y,
+                                                 prior_mean,
+                                                 prior_cov,
+                                                 prior,
+                                                 motion_model,
+                                                 meas_model,
+                                                 num_samples,
                                                  num_iterations)
 
     # xs_kf, Ps_kf, xf_kf, Pf_kf = iterative_kf_rts(y, prior_mean, prior_cov,
@@ -75,8 +94,13 @@ def true_kf_param(A, b, Q, H, c, R, prior_mean, prior_cov, meas):
     print("pred_cov", pred_cov)
 
 
-def test_slr_kf_filter(true_x, y, prior_mean, prior_cov, motion_model,
-                       meas_model, num_samples):
+def test_slr_kf_filter(true_x,
+                       y,
+                       prior_mean,
+                       prior_cov,
+                       motion_model,
+                       meas_model,
+                       num_samples):
     print("\nFILTERING\n")
 
 
