@@ -2,7 +2,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.stats import multivariate_normal as mvn
 from post_lin_smooth.iterative import iterative_post_lin_smooth
-from post_lin_smooth.filtering import analytical_kf, analytical_kf_known_priors
 from post_lin_smooth.smoothing import rts_smoothing
 from post_lin_smooth.slr.distributions import Gaussian
 from models.affine import Affine
@@ -12,7 +11,8 @@ import visualization as vis
 
 def main():
     num_samples = 20000
-    num_iterations = 2
+    K = 20
+    num_iterations = 20
 
     prior_mean = np.array([1, 1, 3, 2])
     prior_cov = 1 * np.eye(4)
@@ -28,7 +28,6 @@ def main():
     H = np.array([[1, 0, 0, 0], [0, 1, 0, 0]])
     c = np.zeros((H @ prior_mean).shape)
     R = 2 * np.eye(2)
-    K = 20
 
     prior = Gaussian
     motion_model = Affine(A, b, Q)
@@ -36,21 +35,15 @@ def main():
     true_x = gen_linear_state_seq(prior_mean, prior_cov, A, Q, K)
     y = gen_linear_meas_seq(true_x, H, R)
 
-    # (xs_slr, Ps_slr, xf_slr, Pf_slr,
-    #  linearizations) = iterative_post_lin_smooth(y, prior_mean, prior_cov,
-    #                                              prior, motion_model,
-    #                                              meas_model, num_samples,
-    #                                              num_iterations)
+    (xs_slr, Ps_slr, xf_slr, Pf_slr,
+     linearizations) = iterative_post_lin_smooth(y, prior_mean, prior_cov,
+                                                 prior, motion_model,
+                                                 meas_model, num_samples,
+                                                 num_iterations)
 
-    xf_kf, Pf_kf, xp_kf, Pp_kf = analytical_kf(y, prior_mean, prior_cov,
-                                               (A, b, Q), (H, c, R))
-    lin = [(A, b, Q)] * K
-    xs_kf, Ps_kf = rts_smoothing(xf_kf, Pf_kf, xp_kf, Pp_kf, lin)
-
-    xf_kf, Pf_kf, xp_kf, Pp_kf = analytical_kf_known_priors(
-        y, xs_kf, Ps_kf, (A, b, Q), (H, c, R))
-
-    xs_kf, Ps_kf = rts_smoothing(xf_kf, Pf_kf, xp_kf, Pp_kf, lin)
+    # xs_kf, Ps_kf, xf_kf, Pf_kf = iterative_kf_rts(y, prior_mean, prior_cov,
+    #                                               (A, b, Q), (H, c, R),
+    #                                               num_iterations)
 
     # A_avg = np.zeros(A.shape)
     # b_avg = np.zeros(b.shape)
@@ -67,10 +60,10 @@ def main():
     #vis.plot_nees_comp(true_x, xs_kf, Ps_kf, xs_slr, Ps_slr)
     vis.plot_nees_and_2d_est(true_x,
                              y,
-                             xf_kf,
-                             Pf_kf,
-                             xs_kf,
-                             Ps_kf,
+                             xf_slr,
+                             Pf_slr,
+                             xs_slr,
+                             Ps_slr,
                              sigma_level=3,
                              skip_cov=2)
 

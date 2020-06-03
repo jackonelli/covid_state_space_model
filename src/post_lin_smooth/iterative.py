@@ -11,7 +11,8 @@ def iterative_post_lin_smooth(measurements, prior_mean, prior_cov,
                               num_iterations: int):
     """Iterative posterior linearization smoothing
     First iteration performs Kalman filtering with SLR and RTS smoothing
-    Subsequent iterations use smooth estimates from previous iteration.
+    Subsequent iterations use smooth estimates from previous iteration
+    in the linearization.
 
     TODO: Remove linearization as an output. Only used for debug.
 
@@ -34,9 +35,9 @@ def iterative_post_lin_smooth(measurements, prior_mean, prior_cov,
     for iter_ in np.arange(2, num_iterations + 1):
         print("Iter: ", iter_)
         (smooth_means, smooth_covs, filter_means, filter_covs,
-         linearizations) = _iteration(measurements, smooth_means, smooth_covs,
-                                      prior, motion_model, meas_model,
-                                      num_samples)
+         linearizations) = _iteration(measurements, prior_mean, prior_cov,
+                                      smooth_means, smooth_covs, prior,
+                                      motion_model, meas_model, num_samples)
     return smooth_means, smooth_covs, filter_means, filter_covs, linearizations
 
 
@@ -57,18 +58,18 @@ def _first_iter(measurements, prior_mean, prior_cov, prior,
     return smooth_means, smooth_covs, filter_means, filter_covs, linearizations
 
 
-def _iteration(measurements, prev_smooth_means, prev_smooth_covs, prior: Prior,
-               motion_model: Conditional, meas_model: Conditional,
-               num_samples: int):
+def _iteration(measurements, prior_mean, prior_cov, prev_smooth_means,
+               prev_smooth_covs, prior: Prior, motion_model: Conditional,
+               meas_model: Conditional, num_samples: int):
     """General non-first iteration
     Performs KF but uses smooth estimates from prev iteration as priors in
     the filtering.
     Standard RTS
     """
     (filter_means, filter_covs, pred_means, pred_covs,
-     linearizations) = slr_kf_known_priors(measurements, prev_smooth_means,
-                                           prev_smooth_covs, prior,
-                                           motion_model, meas_model,
+     linearizations) = slr_kf_known_priors(measurements, prior_mean, prior_cov,
+                                           prev_smooth_means, prev_smooth_covs,
+                                           prior, motion_model, meas_model,
                                            num_samples)
 
     smooth_means, smooth_covs = rts_smoothing(filter_means, filter_covs,

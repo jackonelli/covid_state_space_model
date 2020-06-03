@@ -13,7 +13,8 @@ import visualization as vis
 
 def main():
     np.random.seed(0)
-    num_samples = 20000
+    num_samples = 1000
+    num_iterations = 2
 
     prior = Gaussian
 
@@ -40,7 +41,7 @@ def main():
     #K = 600
     #true_states, measurements = gen_dummy_data(K, sampling_period, meas_model,
     #                                           R)
-    range_ = (0, 70)
+    range_ = (0, 50)
     true_states, measurements = gen_tricky_data(meas_model, R, range_)
     cartes_meas = np.apply_along_axis(partial(to_cartesian_coords, pos=pos), 1,
                                       measurements)
@@ -52,7 +53,8 @@ def main():
 
     xs, Ps, xf, Pf, _ = iterative_post_lin_smooth(measurements, x_0, P_0,
                                                   prior, motion_model,
-                                                  meas_model, num_samples, 1)
+                                                  meas_model, num_samples,
+                                                  num_iterations)
 
     vis.plot_nees_and_2d_est(true_states[range_[0]:range_[1], :],
                              cartes_meas,
