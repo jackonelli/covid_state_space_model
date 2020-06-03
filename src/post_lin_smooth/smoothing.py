@@ -62,7 +62,6 @@ def _rts_update(x_k_K,
     G_k = P_kminus_kminus1 @ A.T @ np.linalg.inv(P_k_kminus1)
     x_kminus1_K = x_kminus1_kminus1 + G_k @ (x_k_K - x_k_kminus1)
     P_kminus1_K = P_kminus_kminus1 + G_k @ (P_k_K - P_k_kminus1) @ G_k.T
-    P_kminus1_K = (P_kminus1_K + P_kminus1_K.T) / 2
     return x_kminus1_K, P_kminus1_K
 
 

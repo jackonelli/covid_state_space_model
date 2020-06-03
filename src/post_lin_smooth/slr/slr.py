@@ -20,7 +20,6 @@ class Slr:
         A = psi.T @ np.linalg.inv(self.p_x.P)
         b = z_bar - A @ _bar(x_sample)
         Sigma = phi - A @ self.p_x.P @ A.T
-        Sigma = (Sigma + Sigma.T) / 2
         if not pos_def_check(Sigma):
             print(np.linalg.eigvals(Sigma))
             print(Sigma)

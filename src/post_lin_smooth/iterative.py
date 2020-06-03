@@ -12,8 +12,8 @@ from analytics import pos_def_ratio
 
 
 def iterative_post_lin_smooth(measurements,
-                              prior_mean,
-                              prior_cov,
+                              x_0_0,
+                              P_0_0,
                               prior: Prior,
                               motion_model: Conditional,
                               meas_model: Conditional,
@@ -28,8 +28,8 @@ def iterative_post_lin_smooth(measurements,
 
     Args:
         measurements (K, D_y)
-        prior_mean (D_x,)
-        prior_cov (D_x, D_x)
+        x_0_0 (D_x,): Prior mean for time 0
+        P_0_0 (D_x, D_x): Prior covariance for time 0
         prior: p(x) used in SLR.
             Note that this is given as a class prototype,
             it is instantiated multiple times in the function
@@ -44,8 +44,8 @@ def iterative_post_lin_smooth(measurements,
      filter_means,
      filter_covs,
      linearizations) = _first_iter(measurements,
-                                   prior_mean,
-                                   prior_cov,
+                                   x_0_0,
+                                   P_0_0,
                                    prior,
                                    motion_model,
                                    meas_model,
@@ -57,8 +57,8 @@ def iterative_post_lin_smooth(measurements,
          filter_means,
          filter_covs,
          linearizations) = _iteration(measurements,
-                                      prior_mean,
-                                      prior_cov,
+                                      x_0_0,
+                                      P_0_0,
                                       smooth_means,
                                       smooth_covs,
                                       prior,
@@ -69,8 +69,8 @@ def iterative_post_lin_smooth(measurements,
 
 
 def _first_iter(measurements,
-                prior_mean,
-                prior_cov,
+                x_0_0,
+                P_0_0,
                 prior,
                 motion_model: Conditional,
                 meas_model: Conditional,
@@ -80,7 +80,7 @@ def _first_iter(measurements,
     Performs KF with SLR, then RTS smoothing.
     """
     filter_means, filter_covs, pred_means, pred_covs, linearizations = slr_kf(
-        measurements, prior_mean, prior_cov, prior, motion_model, meas_model,
+        measurements, x_0_0, P_0_0, prior, motion_model, meas_model,
         num_samples)
     smooth_means, smooth_covs = rts_smoothing(filter_means, filter_covs,
                                               pred_means, pred_covs,
@@ -89,8 +89,8 @@ def _first_iter(measurements,
 
 
 def _iteration(measurements,
-               prior_mean,
-               prior_cov,
+               x_0_0,
+               P_0_0,
                prev_smooth_means,
                prev_smooth_covs,
                prior: Prior,
@@ -107,8 +107,8 @@ def _iteration(measurements,
      pred_means,
      pred_covs,
      linearizations) = slr_kf_known_priors(measurements,
-                                           prior_mean,
-                                           prior_cov,
+                                           x_0_0,
+                                           P_0_0,
                                            prev_smooth_means,
                                            prev_smooth_covs,
                                            prior,

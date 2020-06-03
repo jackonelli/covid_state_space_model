@@ -19,7 +19,7 @@ def slr_kf(measurements,
     Args:
         measurements (K, D_y): Measurement sequence for times 1,..., K
         x_0_0 (D_x,): Prior mean for time 0
-        P_0_0 (D_x, D_x): Prior covariance
+        P_0_0 (D_x, D_x): Prior covariance for time 0
         motion_model
         meas_model
         num_samples
@@ -192,6 +192,5 @@ def _update(y_k, x_k_kminus1, P_k_kminus1, linearization):
     P_k_k = P_k_kminus1 - K @ S @ K.T
     if not pos_def_check(P_k_k):
         raise ValueError("updated cov not pos def")
-    P_k_k = (P_k_k + P_k_k.T) / 2
 
     return x_k_k, P_k_k
