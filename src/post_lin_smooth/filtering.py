@@ -85,20 +85,16 @@ def slr_kf_known_priors(measurements,
         # this really gives y_k
         meas_k = measurements[k - 1]
         print("Time step: ", k)
-        print("Smooth gaussian p(x) cov is pos def:", pos_def_check(prev_smooth_covs[k-1, :, :], False))
         slr = Slr(
             prior(x_bar=prev_smooth_means[k-1, :], P=prev_smooth_covs[k-1, :, :]),
             motion_model)
         motion_lin = slr.linear_parameters(num_samples)
         pred_mean, pred_cov = _predict(prior_mean, prior_cov, motion_lin)
-        print("Pred cov is pos def: {}".format(pos_def_ratio([pred_cov])))
 
         slr = Slr(prior(x_bar=prev_smooth_means[k, :], P=prev_smooth_covs[k, :, :]), meas_model)
         meas_lin = slr.linear_parameters(num_samples)
         updated_mean, updated_cov = _update(meas_k, pred_mean, pred_cov,
                                             meas_lin)
-        print("Updated cov is pos def: {}".format(pos_def_ratio([updated_cov
-                                                                 ])))
         prior_mean = updated_mean
         prior_cov = updated_cov
 
@@ -171,9 +167,6 @@ def _predict(prior_mean, prior_cov, linearization):
     pred_mean = A @ prior_mean + b
     pred_cov = A @ prior_cov @ A.T + Q
     pred_cov = (pred_cov + pred_cov.T) / 2
-    if not pos_def_check(pred_cov):
-        print(np.linalg.eigvals(pred_cov))
-        raise ValueError("Pred cov not pos def")
     return pred_mean, pred_cov
 
 

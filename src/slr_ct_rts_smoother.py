@@ -2,7 +2,6 @@
 from functools import partial
 import numpy as np
 from scipy.stats import multivariate_normal as mvn
-import matplotlib.pyplot as plt
 from post_lin_smooth.iterative import iterative_post_lin_smooth
 from post_lin_smooth.slr.distributions import Gaussian
 from models.range_bearing import to_cartesian_coords
@@ -15,7 +14,7 @@ def main():
     np.random.seed(1)
     num_samples = 10000
     num_iterations = 3
-    range_ = (0, 2)
+    range_ = (0, 75)
 
     prior = Gaussian
 
@@ -56,9 +55,9 @@ def main():
     # Prior distr.
     x_0 = np.array([4.4, 0, 4, 0, 0])
     P_0 = np.diag(
-        [10**2,
-         10**2,
-         10**2,
+        [1**2,
+         1**2,
+         1**2,
          (5 * np.pi / 180)**2,
          (1 * np.pi / 180)**2])
 

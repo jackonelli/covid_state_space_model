@@ -50,8 +50,6 @@ def iterative_post_lin_smooth(measurements,
                                    motion_model,
                                    meas_model,
                                    num_samples)
-    print("Pct of smooth covs that are pos def: {}".format(
-        pos_def_ratio(smooth_covs)))
     for iter_ in np.arange(2, num_iterations + 1):
         print("Iter: ", iter_)
         (smooth_means,
@@ -118,13 +116,7 @@ def _iteration(measurements,
                                            meas_model,
                                            num_samples)
 
-    print("Pct of pred covs that are pos def: {}".format(
-        pos_def_ratio(pred_covs)))
-    print("Pct of filter covs that are pos def: {}".format(
-        pos_def_ratio(filter_covs)))
     smooth_means, smooth_covs = rts_smoothing(filter_means, filter_covs,
                                               pred_means, pred_covs,
                                               linearizations)
-    print("Pct of smooth covs that are pos def: {}".format(
-        pos_def_ratio(smooth_covs)))
     return smooth_means, smooth_covs, filter_means, filter_covs, linearizations
