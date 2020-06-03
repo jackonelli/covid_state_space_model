@@ -2,7 +2,7 @@
 import numpy as np
 from scipy.linalg import sqrtm
 import matplotlib.pyplot as plt
-from analytics import nees
+from post_lin_smooth.analytics import nees
 
 
 def plot_nees_comp(true_x, x_1, P_1, x_2, P_2):
@@ -22,7 +22,6 @@ def plot_nees_and_2d_est(true_x,
                          Ps,
                          sigma_level=3,
                          skip_cov=1):
-    print(xs.shape)
     filter_nees = nees(true_x, xf[1:, :], Pf[1:, :, :])
     smooth_nees = nees(true_x, xs[1:, :], Ps[1:, :, :])
     print("Filter NEES avg: {}".format(filter_nees.mean()))

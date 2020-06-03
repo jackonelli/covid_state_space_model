@@ -5,7 +5,7 @@ from post_lin_smooth.iterative import iterative_post_lin_smooth
 from post_lin_smooth.smoothing import rts_smoothing
 from post_lin_smooth.slr.distributions import Gaussian
 from models.affine import Affine
-from analytics import nees
+from post_lin_smooth.analytics import nees
 import visualization as vis
 
 
