@@ -2,11 +2,15 @@
 import numpy as np
 from post_lin_smooth.slr.distributions import Prior, Conditional
 from post_lin_smooth.slr.slr import Slr
-from analytics import pos_def_check
+from analytics import pos_def_check, pos_def_ratio
 
 
-def slr_kf(measurements, prior_mean, prior_cov, prior: Prior,
-           motion_model: Conditional, meas_model: Conditional,
+def slr_kf(measurements,
+           prior_mean,
+           prior_cov,
+           prior: Prior,
+           motion_model: Conditional,
+           meas_model: Conditional,
            num_samples: int):
     """Kalman filter with SLR linearization
     Filters a measurement sequence using a linear Kalman filter.
@@ -32,10 +36,10 @@ def slr_kf(measurements, prior_mean, prior_cov, prior: Prior,
     K = measurements.shape[0]
     dim_x = prior_mean.shape[0]
 
-    filter_means = np.zeros((K, dim_x))
-    filter_cov = np.zeros((K, dim_x, dim_x))
-    pred_means = np.zeros((K, dim_x))
-    pred_covs = np.zeros((K, dim_x, dim_x))
+    filter_means = np.empty((K, dim_x))
+    filter_cov = np.empty((K, dim_x, dim_x))
+    pred_means = np.empty((K, dim_x))
+    pred_covs = np.empty((K, dim_x, dim_x))
     linearizations = [None] * K
     for k, meas in enumerate(measurements):
         print("Time step: ", k)
@@ -60,18 +64,26 @@ def slr_kf(measurements, prior_mean, prior_cov, prior: Prior,
     return filter_means, filter_cov, pred_means, pred_covs, linearizations
 
 
-def slr_kf_known_priors(measurements, prior_mean, prior_cov, prev_smooth_means,
-                        prev_smooth_covs, prior, motion_model: Conditional,
-                        meas_model: Conditional, num_samples: int):
+def slr_kf_known_priors(measurements,
+                        prior_mean,
+                        prior_cov,
+                        prev_smooth_means,
+                        prev_smooth_covs,
+                        prior,
+                        motion_model: Conditional,
+                        meas_model: Conditional,
+                        num_samples: int):
 
     K = measurements.shape[0]
     dim_x = prev_smooth_means.shape[1]
 
-    filter_means = np.zeros((K, dim_x))
-    filter_cov = np.zeros((K, dim_x, dim_x))
-    pred_means = np.zeros((K, dim_x))
-    pred_covs = np.zeros((K, dim_x, dim_x))
+    filter_means = np.empty((K, dim_x))
+    filter_cov = np.empty((K, dim_x, dim_x))
+    pred_means = np.empty((K, dim_x))
+    pred_covs = np.empty((K, dim_x, dim_x))
     linearizations = [None] * K
+    print("Pct of prev_smooth that are pos def: {}".format(
+        pos_def_ratio(prev_smooth_covs)))
     for k, meas in enumerate(measurements):
         print("Time step: ", k)
         slr = Slr(
@@ -79,11 +91,14 @@ def slr_kf_known_priors(measurements, prior_mean, prior_cov, prev_smooth_means,
             motion_model)
         motion_lin = slr.linear_parameters(num_samples)
         pred_mean, pred_cov = _predict(prior_mean, prior_cov, motion_lin)
+        print("Pred cov is pos def: {}".format(pos_def_ratio([pred_cov])))
 
         slr = Slr(prior(x_bar=pred_mean, P=pred_cov), meas_model)
         meas_lin = slr.linear_parameters(num_samples)
         updated_mean, updated_cov = _update(meas, pred_mean, pred_cov,
                                             meas_lin)
+        print("Updated cov is pos def: {}".format(pos_def_ratio([updated_cov
+                                                                 ])))
         prior_mean = updated_mean
         prior_cov = updated_cov
 
@@ -119,10 +134,10 @@ def analytical_kf(measurements, prior_mean, prior_cov, motion_lin, meas_lin):
     K = measurements.shape[0]
     dim_x = prior_mean.shape[0]
 
-    filter_means = np.zeros((K, dim_x))
-    filter_cov = np.zeros((K, dim_x, dim_x))
-    pred_means = np.zeros((K, dim_x))
-    pred_covs = np.zeros((K, dim_x, dim_x))
+    filter_means = np.empty((K, dim_x))
+    filter_cov = np.empty((K, dim_x, dim_x))
+    pred_means = np.empty((K, dim_x))
+    pred_covs = np.empty((K, dim_x, dim_x))
     for k, meas in enumerate(measurements):
         pred_mean, pred_cov = _predict(prior_mean, prior_cov, motion_lin)
 

@@ -13,9 +13,9 @@ import visualization as vis
 
 def main():
     # np.random.seed(0)
-    num_samples = 1000
-    num_iterations = 1
-    range_ = (0, 30)
+    num_samples = 20000
+    num_iterations = 2
+    range_ = (0, 15)
 
     prior = Gaussian
 
@@ -26,7 +26,11 @@ def main():
     sigma_v = v_scale * 1
     sigma_omega = omega_scale * np.pi / 180
     Q = np.diag([
-        0, 0, sampling_period * sigma_v**2, 0, sampling_period * sigma_omega**2
+        0,
+        0,
+        sampling_period * sigma_v**2,
+        0,
+        sampling_period * sigma_omega**2
     ])
     motion_model = CoordTurn(sampling_period, Q)
 
@@ -44,13 +48,19 @@ def main():
     #     K, sampling_period, meas_model, R)
     true_states, measurements = gen_tricky_data(meas_model, R, range_)
     obs_dims = true_states.shape[1]
-    cartes_meas = np.apply_along_axis(partial(to_cartesian_coords, pos=pos), 1,
+    cartes_meas = np.apply_along_axis(partial(to_cartesian_coords,
+                                              pos=pos),
+                                      1,
                                       measurements)
 
     # Prior distr.
     x_0 = np.array([4.4, 0, 4, 0, 0])
     P_0 = np.diag(
-        [10**2, 10**2, 10**2, (5 * np.pi / 180)**2, (1 * np.pi / 180)**2])
+        [10**2,
+         10**2,
+         10**2,
+         (5 * np.pi / 180)**2,
+         (1 * np.pi / 180)**2])
 
     xs, Ps, xf, Pf, _ = iterative_post_lin_smooth(measurements, x_0, P_0,
                                                   prior, motion_model,

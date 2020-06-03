@@ -35,3 +35,8 @@ def _is_pos_def(x):
 
 def pos_def_check(x, disabled=True):
     return _is_pos_def(x) or disabled
+
+
+def pos_def_ratio(covs):
+    pos_defs = [pos_def_check(cov, False) for cov in covs]
+    return sum(pos_defs) / len(pos_defs)
