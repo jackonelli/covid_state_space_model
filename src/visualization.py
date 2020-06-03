@@ -30,6 +30,8 @@ def plot_nees_and_2d_est(true_x,
     _, (ax_1, ax_2) = plt.subplots(1, 2)
     ax_1.plot(filter_nees, "-b", label="filter")
     ax_1.plot(smooth_nees, "--g", label="smooth")
+    K, D_x = true_x.shape
+    ax_1.plot([0, K], [D_x, D_x], "--k", label="ref")
 
     ax_2.plot(true_x[:, 0], true_x[:, 1], ".k", label="true")
     ax_2.plot(meas[:, 0], meas[:, 1], ".r", label="meas")

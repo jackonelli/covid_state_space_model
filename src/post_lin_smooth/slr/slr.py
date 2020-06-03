@@ -1,7 +1,7 @@
 """Stochastic linear regression (SLR)"""
 import numpy as np
 from post_lin_smooth.slr.distributions import Prior, Conditional
-from analytics import is_pos_def
+from analytics import pos_def_check
 
 
 class Slr:
@@ -21,10 +21,10 @@ class Slr:
         b = z_bar - A @ _bar(x_sample)
         Sigma = phi - A @ self.p_x.P @ A.T
         Sigma = (Sigma + Sigma.T) / 2
-        # if not is_pos_def(Sigma):
-        #     print(np.linalg.eigvals(Sigma))
-        #     print(Sigma)
-        #     raise ValueError("Sigma not pos def")
+        if not pos_def_check(Sigma):
+            print(np.linalg.eigvals(Sigma))
+            print(Sigma)
+            raise ValueError("Sigma not pos def")
         return A, b, Sigma
 
     def _sample(self, num_samples: int):

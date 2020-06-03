@@ -12,9 +12,10 @@ import visualization as vis
 
 
 def main():
-    np.random.seed(0)
+    # np.random.seed(0)
     num_samples = 1000
-    num_iterations = 2
+    num_iterations = 1
+    range_ = (0, 30)
 
     prior = Gaussian
 
@@ -38,11 +39,11 @@ def main():
     meas_model = RangeBearing(pos, R)
 
     # Generate data
-    #K = 600
-    #true_states, measurements = gen_dummy_data(K, sampling_period, meas_model,
-    #                                           R)
-    range_ = (0, 50)
+    # K = 600
+    # true_states, measurements, obs_dims = gen_dummy_data(
+    #     K, sampling_period, meas_model, R)
     true_states, measurements = gen_tricky_data(meas_model, R, range_)
+    obs_dims = true_states.shape[1]
     cartes_meas = np.apply_along_axis(partial(to_cartesian_coords, pos=pos), 1,
                                       measurements)
 
@@ -58,10 +59,10 @@ def main():
 
     vis.plot_nees_and_2d_est(true_states[range_[0]:range_[1], :],
                              cartes_meas,
-                             xf[:, :2],
-                             Pf[:, :2, :2],
-                             xs[:, :2],
-                             Ps[:, :2, :2],
+                             xf[:, :obs_dims],
+                             Pf[:, :obs_dims, :obs_dims],
+                             xs[:, :obs_dims],
+                             Ps[:, :obs_dims, :obs_dims],
                              sigma_level=3,
                              skip_cov=5)
 

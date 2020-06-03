@@ -2,7 +2,7 @@
 import numpy as np
 from post_lin_smooth.slr.distributions import Prior, Conditional
 from post_lin_smooth.slr.slr import Slr
-from analytics import is_pos_def
+from analytics import pos_def_check
 
 
 def slr_kf(measurements, prior_mean, prior_cov, prior: Prior,
@@ -147,7 +147,7 @@ def _predict(prior_mean, prior_cov, linearization):
     pred_mean = A @ prior_mean + b
     pred_cov = A @ prior_cov @ A.T + Q
     pred_cov = (pred_cov + pred_cov.T) / 2
-    if not is_pos_def(pred_cov):
+    if not pos_def_check(pred_cov):
         print(np.linalg.eigvals(pred_cov))
         raise ValueError("Pred cov not pos def")
     return pred_mean, pred_cov
@@ -163,7 +163,7 @@ def _update(meas, pred_mean, pred_cov, linearization):
     updated_mean = pred_mean + (K @ (meas - meas_mean)).reshape(
         pred_mean.shape)
     updated_cov = pred_cov - K @ S @ K.T
-    if not is_pos_def(updated_cov):
+    if not pos_def_check(updated_cov):
         raise ValueError("updated cov not pos def")
     updated_cov = (updated_cov + updated_cov.T) / 2
 

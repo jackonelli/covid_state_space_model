@@ -29,6 +29,9 @@ def _single_nees(err, cov):
     return err.T @ np.linalg.inv(cov) @ err
 
 
-def is_pos_def(x):
-    return True
-    # return np.all(np.linalg.eigvals(x) > 0)
+def _is_pos_def(x):
+    return np.all(np.linalg.eigvals(x) > 0)
+
+
+def pos_def_check(x, disabled=True):
+    return _is_pos_def(x) or disabled
