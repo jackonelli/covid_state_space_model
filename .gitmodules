@@ -1,0 +1,3 @@
+[submodule "src/post_lin_smooth"]
+	path = src/post_lin_smooth
+	url = git@github.com:jackonelli/post_lin_smooth.git
