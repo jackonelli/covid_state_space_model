@@ -40,9 +40,8 @@ def rts_smoothing(filter_means,
                                               linear_params)
         if not pos_def_check(smooth_cov):
             raise ValueError("Smooth cov not pos def")
-        smooth_means[k, :] = smooth_mean
-        smooth_covs[k, :, :] = smooth_cov
-    print(smooth_means)
+        smooth_means[k - 1, :] = smooth_mean
+        smooth_covs[k - 1, :, :] = smooth_cov
     return smooth_means, smooth_covs
 
 
@@ -64,8 +63,9 @@ def _rts_update(xs_kplus1,
 
 
 def _init_smooth_estimates(filter_means, filter_covs):
-    K = filter_means.shape[0]
-    smooth_means, smooth_covs = _init_estimates(filter_means[0, :], filter_covs[0, :, :], K)
+    K, D_x = filter_means.shape
+    smooth_means = np.empty((K, D_x))
+    smooth_covs = np.empty((K, D_x, D_x))
     smooth_means[-1, :] = filter_means[-1, :]
     smooth_covs[-1, :, :] = filter_covs[-1, :, :]
     return smooth_means, smooth_covs

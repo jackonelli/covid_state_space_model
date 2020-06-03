@@ -22,8 +22,9 @@ def plot_nees_and_2d_est(true_x,
                          Ps,
                          sigma_level=3,
                          skip_cov=1):
-    filter_nees = nees(true_x, xf, Pf)
-    smooth_nees = nees(true_x, xs, Ps)
+    print(xs.shape)
+    filter_nees = nees(true_x, xf[1:, :], Pf[1:, :, :])
+    smooth_nees = nees(true_x, xs[1:, :], Ps[1:, :, :])
     print("Filter NEES avg: {}".format(filter_nees.mean()))
     print("Smooth NEES avg: {}".format(smooth_nees.mean()))
 

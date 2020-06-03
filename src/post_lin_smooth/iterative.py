@@ -50,20 +50,8 @@ def iterative_post_lin_smooth(measurements,
                                    motion_model,
                                    meas_model,
                                    num_samples)
-    _, ax = plt.subplots()
-    cartes_meas = np.apply_along_axis(
-        partial(to_cartesian_coords,
-                pos=np.array([100,
-                              -100])),
-        1,
-        measurements)
-    ax.plot(cartes_meas[:, 0], cartes_meas[:, 1], "r.")
     print("Pct of smooth covs that are pos def: {}".format(
         pos_def_ratio(smooth_covs)))
-    vis.plot_mean_and_cov(ax, filter_means[:, :2], filter_covs[:,:2, :2], 3, "filter", "b", 1)
-    vis.plot_mean_and_cov(ax, smooth_means[:, :2], smooth_covs[:,:2, :2], 3, "smooth", "g", 1)
-    ax.set_title("Iter: {}".format(1))
-    plt.show()
     for iter_ in np.arange(2, num_iterations + 1):
         print("Iter: ", iter_)
         (smooth_means,
@@ -79,24 +67,6 @@ def iterative_post_lin_smooth(measurements,
                                       motion_model,
                                       meas_model,
                                       num_samples)
-        _, ax = plt.subplots()
-        ax.plot(cartes_meas[:, 0], cartes_meas[:, 1], "r.")
-        vis.plot_mean_and_cov(ax,
-                              filter_means[:, :2],
-                              filter_covs[:,:2, :2],
-                              3,
-                              "filter",
-                              "b",
-                              1)
-        vis.plot_mean_and_cov(ax,
-                              smooth_means[:, :2],
-                              smooth_covs[:,:2, :2],
-                              3,
-                              "smooth",
-                              "g",
-                              1)
-        ax.set_title("Iter: {}".format(iter_))
-        plt.show()
     return smooth_means, smooth_covs, filter_means, filter_covs, linearizations
 
 
@@ -114,16 +84,9 @@ def _first_iter(measurements,
     filter_means, filter_covs, pred_means, pred_covs, linearizations = slr_kf(
         measurements, prior_mean, prior_cov, prior, motion_model, meas_model,
         num_samples)
-    plt.plot(filter_means[:, 0], filter_means[:, 1])
-    plt.plot(measurements[:, 0], measurements[:, 1])
-    plt.show()
     smooth_means, smooth_covs = rts_smoothing(filter_means, filter_covs,
                                               pred_means, pred_covs,
                                               linearizations)
-    plt.plot(filter_means[:, 0], filter_means[:, 1])
-    plt.plot(smooth_means[:, 0], smooth_covs[:, 1])
-    plt.plot(measurements[:, 0], measurements[:, 1])
-    plt.show()
     return smooth_means, smooth_covs, filter_means, filter_covs, linearizations
 
 

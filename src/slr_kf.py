@@ -12,7 +12,7 @@ import visualization as vis
 def main():
     num_samples = 20000
     K = 20
-    num_iterations = 1
+    num_iterations = 10
 
     prior_mean = np.array([1, 1, 3, 2])
     prior_cov = 1 * np.eye(4)
@@ -132,7 +132,7 @@ def gen_linear_state_seq(x_0, P_0, A, Q, K):
     """
     X = np.zeros((K, x_0.shape[0]))
 
-    X[0, :] = mvn.rvs(mean=x_0, cov=P_0, size=1)
+    X[0, :] = mvn.rvs(mean=A @ x_0, cov=P_0, size=1)
 
     q = mvn.rvs(mean=np.zeros(x_0.shape), cov=Q, size=K)
 
