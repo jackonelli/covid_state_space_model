@@ -31,35 +31,39 @@ def rts_smoothing(filter_means,
     for k in np.flip(np.arange(1, K + 1)):
         print("Time step: ", k)
         linear_params = linearizations[k - 1]
-        smooth_mean, smooth_cov = _rts_update(smooth_means[k, :],
-                                              smooth_covs[k, :, :],
-                                              filter_means[k-1, :],
-                                              filter_covs[k-1, :, :],
-                                              pred_means[k, :],
-                                              pred_covs[k, :, :],
-                                              linear_params)
-        if not pos_def_check(smooth_cov):
+        x_k_K, P_k_K = smooth_means[k, :], smooth_covs[k, :, :]
+        x_k_kminus1, P_k_kminus1 = pred_means[k, :], pred_covs[k, :, :]
+        x_kminus1_kminus1 = filter_means[k - 1, :]
+        P_kminus_kminus1 = filter_covs[k - 1, :, :]
+        x_kminus1_K, P_kminus1_K = _rts_update(x_k_K,
+                                               P_k_K,
+                                               x_kminus1_kminus1,
+                                               P_kminus_kminus1,
+                                               x_k_kminus1,
+                                               P_k_kminus1,
+                                               linear_params)
+        if not pos_def_check(P_kminus1_K):
             raise ValueError("Smooth cov not pos def")
-        smooth_means[k - 1, :] = smooth_mean
-        smooth_covs[k - 1, :, :] = smooth_cov
+        smooth_means[k - 1, :] = x_kminus1_K
+        smooth_covs[k - 1, :, :] = P_kminus1_K
     return smooth_means, smooth_covs
 
 
-def _rts_update(xs_kplus1,
-                Ps_kplus1,
-                xf_k,
-                Pf_k,
-                xp_kplus1,
-                Pp_kplus1,
+def _rts_update(x_k_K,
+                P_k_K,
+                x_kminus1_kminus1,
+                P_kminus_kminus1,
+                x_k_kminus1,
+                P_k_kminus1,
                 linear_params):
     """RTS update step"""
     A, b, Q = linear_params
 
-    G_k = Pf_k @ A.T @ np.linalg.inv(Pp_kplus1)
-    xs_k = xf_k + G_k @ (xs_kplus1 - xp_kplus1)
-    Ps_k = Pf_k + G_k @ (Ps_kplus1 - Pp_kplus1) @ G_k.T
-    Ps_k = (Ps_k + Ps_k.T) / 2
-    return xs_k, Ps_k
+    G_k = P_kminus_kminus1 @ A.T @ np.linalg.inv(P_k_kminus1)
+    x_kminus1_K = x_kminus1_kminus1 + G_k @ (x_k_K - x_k_kminus1)
+    P_kminus1_K = P_kminus_kminus1 + G_k @ (P_k_K - P_k_kminus1) @ G_k.T
+    P_kminus1_K = (P_kminus1_K + P_kminus1_K.T) / 2
+    return x_kminus1_K, P_kminus1_K
 
 
 def _init_smooth_estimates(filter_means, filter_covs):

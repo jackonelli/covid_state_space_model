@@ -22,8 +22,7 @@ class Prior(ABC):
 
 
 class Conditional(ABC):
-    """Conditional distribution p(z | x)
-    """
+    """Conditional distribution p(z | x)"""
     @abstractmethod
     def sample(self, x_sample, num_samples: int):
         pass
