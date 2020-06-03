@@ -1,16 +1,18 @@
 """Data scraper for C19-site
 
-This script downloads the full html source code for the page
+The data is scraped through the following steps:
+
+1. Download the full html source code for the page
 https://c19.se/
 
-Then it locates the correct <script> tag (out of several possible)
-and uses a regex to read a JSON-like struct to a string.
+2. Locate the correct <script> tag (out of several possible)
+and use a regex to read a JSON-like struct to a string.
 
-The string is parsed to the data format YAML,
+3. Parse the raw string to the data format YAML,
 it is a superset of JSON and able to handle a larger set of strings
 (specifically here we need to be able to parse keys not in quotation marks).
 
-The YAML data constructs a local data class `data.c19.C19Data`
+4. The local data class `data.c19.C19Data` is constructed from the YAML data
 and writes it to a JSON file. This last step can of course be modified to
 instead write to another format.
 """

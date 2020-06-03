@@ -10,9 +10,9 @@ class CoordTurn(Conditional):
         x_k = [
             pos_x,
             pos_y,
-        speedspeed,
-            phi,
-            omega
+            v: speed,
+            phi: angle,
+            omega: angular_vel,
         ]
     """
     def __init__(self, sampling_period, process_noise):
