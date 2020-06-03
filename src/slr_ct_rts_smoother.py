@@ -12,10 +12,10 @@ import visualization as vis
 
 
 def main():
-    # np.random.seed(0)
+    np.random.seed(1)
     num_samples = 20000
-    num_iterations = 2
-    range_ = (0, 15)
+    num_iterations = 5
+    range_ = (0, 5)
 
     prior = Gaussian
 

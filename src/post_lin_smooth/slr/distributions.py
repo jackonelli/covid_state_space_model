@@ -1,6 +1,7 @@
 """Distribution interfaces for SLR"""
 from abc import ABC, abstractmethod
 from scipy.stats import multivariate_normal as mvn
+from analytics import pos_def_check
 
 
 class Prior(ABC):
@@ -33,4 +34,5 @@ class Gaussian(Prior):
         self.P = P
 
     def sample(self, num_samples):
+        print("Gaussian p(x) cov is pos def:", pos_def_check(self.P, False))
         return mvn.rvs(mean=self.x_bar, cov=self.P, size=num_samples)

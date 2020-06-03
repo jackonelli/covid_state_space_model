@@ -82,10 +82,9 @@ def slr_kf_known_priors(measurements,
     pred_means = np.empty((K, dim_x))
     pred_covs = np.empty((K, dim_x, dim_x))
     linearizations = [None] * K
-    print("Pct of prev_smooth that are pos def: {}".format(
-        pos_def_ratio(prev_smooth_covs)))
     for k, meas in enumerate(measurements):
         print("Time step: ", k)
+        print("Smooth gaussian p(x) cov is pos def:", pos_def_check(prev_smooth_covs[k, :, :], False))
         slr = Slr(
             prior(x_bar=prev_smooth_means[k, :], P=prev_smooth_covs[k, :, :]),
             motion_model)

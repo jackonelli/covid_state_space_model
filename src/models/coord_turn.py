@@ -22,7 +22,8 @@ class CoordTurn(Conditional):
     def sample(self, states):
         means = np.apply_along_axis(self.mean, 1, states)
         num_samples, mean_dim = means.shape
-        noise = mvn.rvs(mean=np.zeros((mean_dim, )),
+        noise = mvn.rvs(mean=np.zeros((mean_dim,
+                                       )),
                         cov=self.process_noise,
                         size=num_samples)
         return means + noise
@@ -33,7 +34,9 @@ class CoordTurn(Conditional):
         omega = state[4]
         delta = np.array([
             self.sampling_period * v * np.cos(phi),
-            self.sampling_period * v * np.sin(phi), 0,
-            self.sampling_period * omega, 0
+            self.sampling_period * v * np.sin(phi),
+            0,
+            self.sampling_period * omega,
+            0
         ])
         return state + delta
