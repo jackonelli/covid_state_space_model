@@ -47,14 +47,14 @@ class Motion(Conditional):
         self.population_size = int(population_size)
 
     def sample(self, states):
-        s, i, r = destructure_state(
-            denormalize_state(states, self.population_size))
+        s, i, r = _destructure_state(
+            _denormalize_state(states, self.population_size))
         delta_i = self._delta_i(s, i)
         delta_r = self._delta_r(i)
         s_new = s - delta_i
         i_new = i + delta_i - delta_r
         r_new = r + delta_r
-        sample = normalize_state(structure_state(s_new, i_new, r_new))
+        sample = _normalize_state(_structure_state(s_new, i_new, r_new))
         return sample
 
     def _delta_i(self, s, i):
@@ -70,11 +70,11 @@ class Meas(Conditional):
         self.population_size = population_size
 
     def sample(self, states):
-        _, i, _ = destructure_state(states)
+        _, i, _ = _destructure_state(states)
         return np.reshape(i, (i.shape[0], 1))
 
 
-def normalize_state(states):
+def _normalize_state(states):
     """Normalize multiple states at once
     This works for both states represented in full population
     and states represented with portion of population
@@ -90,15 +90,15 @@ def normalize_state(states):
     return states / states.sum(1, keepdims=True)
 
 
-def denormalize_state(state, population_size: int):
+def _denormalize_state(state, population_size: int):
     return (state * population_size).astype("int64")
 
 
-def structure_state(s, i, r):
+def _structure_state(s, i, r):
     return np.column_stack((s, i, r))
 
 
-def destructure_state(state):
+def _destructure_state(state):
     s = state[:, 0]
     i = state[:, 1]
     r = state[:, 2]

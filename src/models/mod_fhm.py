@@ -34,8 +34,8 @@ class Motion(Conditional):
         self.population_size = int(population_size)
 
     def sample(self, states):
-        s, e, i_u, i_r, r = destructure_state(
-            denormalize_state(states, self.population_size))
+        s, e, i_u, i_r, r = _destructure_state(
+            _denormalize_state(states, self.population_size))
         delta_e = self._delta_e(s, i_u, i_r)
         delta_i_u = self._delta_i_u(e)
         delta_i_r = self._delta_i_u(e)
@@ -46,8 +46,12 @@ class Motion(Conditional):
         i_u_new = i_u + delta_i_u - delta_r_u
         i_r_new = i_r + delta_i_r - delta_r_r
         r_new = r + delta_r_u + delta_r_r
-        sample = normalize_state(
-            structure_state(s_new, e_new, i_u_new, i_r_new, r_new),
+        sample = _normalize_state(
+            _structure_state(s_new,
+                             e_new,
+                             i_u_new,
+                             i_r_new,
+                             r_new),
             self.population_size)
         return sample
 
@@ -76,23 +80,23 @@ class Meas(Conditional):
         self.population_size = population_size
 
     def sample(self, states):
-        _, _, _, i_r, _ = destructure_state(states)
+        _, _, _, i_r, _ = _destructure_state(states)
         return np.reshape(i_r, (i_r.shape[0], 1))
 
 
-def normalize_state(states, population_size):
+def _normalize_state(states, population_size):
     return states / population_size
 
 
-def denormalize_state(state, population_size: int):
+def _denormalize_state(state, population_size: int):
     return (state * population_size).astype("int64")
 
 
-def structure_state(s, e, i_u, i_r, r):
+def _structure_state(s, e, i_u, i_r, r):
     return np.column_stack((s, e, i_u, i_r, r))
 
 
-def destructure_state(state):
+def _destructure_state(state):
     s = state[:, 0]
     e = state[:, 1]
     i_u = state[:, 2]
