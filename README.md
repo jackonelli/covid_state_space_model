@@ -49,3 +49,7 @@ python src/affine_example.py
 - Create a class for partial SLR.
 - Toy SIR model, in place but trunc. sampling not working.
 - Impl partial SLR for FHM model(s)
+- Square root version of KF and RTS
+- Actual FHM model
+- Modified FHM model
+- Parameter estimation (MCMC, possibly EM)
