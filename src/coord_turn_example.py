@@ -12,7 +12,7 @@ import visualization as vis
 
 
 def main():
-    #np.random.seed(1)
+    # np.random.seed(1)
     num_samples = 10000
     num_iterations = 3
     range_ = (0, 75)
