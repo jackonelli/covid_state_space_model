@@ -12,6 +12,7 @@ from dataclasses import dataclass
 import numpy as np
 from scipy.stats import binom
 from scipy.stats import multivariate_normal as mvn
+from scipy.stats import norm
 from post_lin_smooth.slr.distributions import Prior, Conditional
 
 
@@ -31,6 +32,7 @@ class Motion(Conditional):
         return "Toy FHM: {}".format(self.params)
 
     def sample(self, states):
+        states = _normalize_state(states)
         if np.any(states < 0.0):
             ValueError("Cond. on negative values in motion model")
         s, i, r = _destructure_state(
@@ -52,12 +54,14 @@ class Motion(Conditional):
 
 
 class Meas(Conditional):
-    def __init__(self, population_size):
+    def __init__(self, population_size, detection_rate):
         self.population_size = population_size
+        self.detection_rate
 
     def sample(self, states):
-        _, i, _ = _destructure_state(states)
-        return np.reshape(i, (i.shape[0], 1))
+        _, i, _ = _denormalize_state(_destructure_state(states))
+        detected = binom.rvs(i, self.detection_rate, size=states.shape[0])
+        return np.reshape(i + noise, (i.shape[0], 1))
 
 
 def generate_true_state(params: Params, num_time_steps: int, pop_start_state):

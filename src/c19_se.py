@@ -45,7 +45,7 @@ def main():
     time_series = extract_time_series(data_script)
     yaml_data = parse_to_dict(time_series)
     parsed_data = c19.C19Data.from_yaml_dict(yaml_data)
-    parsed_data.save_to_json(args.output_file)
+    parsed_data.save_to_csv(args.output_file)
 
 
 def extract_data_script(source):

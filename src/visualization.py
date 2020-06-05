@@ -61,6 +61,20 @@ def plot_mean_and_cov(ax, means, covs, sigma_level, label, color, skip_cov):
     last_handle.set_label(r"${} \sigma$".format(sigma_level))
 
 
+def plot_mean_and_cov_1d(ax, means, covs, sigma_level, label, color, skip_cov):
+    stds = np.sqrt(covs)
+    fmt = "{}-*".format(color)
+    ax.plot(means, fmt, label=label)
+    print(covs)
+    last_handle = ax.fill_between(x=np.arange(0,
+                                              means.shape[0],
+                                              skip_cov),
+                                  y1=means - sigma_level**2 * stds,
+                                  y2=means + sigma_level**2 * stds)
+
+    last_handle.set_label(r"${} \sigma$".format(sigma_level))
+
+
 def plot_sigma_level(ax, means, covs, level, label, color, resolution=50):
     fmt = "{}--".format(color)
     ellips = ellips_points(means, covs, level, resolution)
