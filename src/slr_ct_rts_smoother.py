@@ -4,6 +4,7 @@ import numpy as np
 from scipy.stats import multivariate_normal as mvn
 from post_lin_smooth.iterative import iterative_post_lin_smooth
 from post_lin_smooth.slr.distributions import Gaussian
+from post_lin_smooth.slr.slr import Slr
 from models.range_bearing import to_cartesian_coords
 from models.coord_turn import CoordTurn
 from models.range_bearing import RangeBearing
@@ -11,12 +12,10 @@ import visualization as vis
 
 
 def main():
-    np.random.seed(1)
+    #np.random.seed(1)
     num_samples = 10000
     num_iterations = 3
     range_ = (0, 75)
-
-    prior = Gaussian
 
     # Motion model
     sampling_period = 0.1
@@ -31,7 +30,10 @@ def main():
         0,
         sampling_period * sigma_omega**2
     ])
-    motion_model = CoordTurn(sampling_period, Q)
+    motion_lin = Slr(p_x=Gaussian(),
+                     p_z_given_x=CoordTurn(sampling_period,
+                                           Q),
+                     num_samples=num_samples)
 
     # Meas model
     pos = np.array([100, -100])
@@ -40,6 +42,9 @@ def main():
 
     R = np.diag([sigma_r**2, sigma_phi**2])
     meas_model = RangeBearing(pos, R)
+    meas_lin = Slr(p_x=Gaussian(),
+                   p_z_given_x=meas_model,
+                   num_samples=num_samples)
 
     # Generate data
     # K = 600
@@ -62,9 +67,7 @@ def main():
          (1 * np.pi / 180)**2])
 
     xs, Ps, xf, Pf, _ = iterative_post_lin_smooth(measurements, x_0, P_0,
-                                                  prior, motion_model,
-                                                  meas_model, num_samples,
-                                                  num_iterations)
+                                                  motion_lin, meas_lin, num_iterations)
 
     vis.plot_nees_and_2d_est(true_states[range_[0]:range_[1], :],
                              cartes_meas,

@@ -21,32 +21,18 @@ class Params:
     p_i_r: float
 
 
-class TruncGauss(Prior):
-    def __init__(self, x_bar, P):
-        self.x_bar = x_bar
-        self.P = P
-
-    def __str__(self):
-        return "TruncGauss: x_bar={}, P={}".format(self.x_bar, self.P)
-
-    def sample(self, num_samples):
-        successful_samples = 0
-        sample = np.zeros((num_samples, self.x_bar.shape[0]))
-        while successful_samples < num_samples:
-            candidate = mvn.rvs(mean=self.x_bar, cov=self.P)
-            if (candidate > 0).all():
-                sample[successful_samples, :] = candidate
-                successful_samples += 1
-        return sample / sample.sum(1, keepdims=True)
-
-
 class Motion(Conditional):
     def __init__(self, params: Params, population_size: int):
 
         self.params = params
         self.population_size = int(population_size)
 
+    def __str__(self):
+        return "Toy FHM: {}".format(self.params)
+
     def sample(self, states):
+        if np.any(states < 0.0):
+            ValueError("Cond. on negative values in motion model")
         s, i, r = _destructure_state(
             _denormalize_state(states, self.population_size))
         delta_i = self._delta_i(s, i)
@@ -59,7 +45,7 @@ class Motion(Conditional):
 
     def _delta_i(self, s, i):
         interactions = s * i
-        return binom.rvs(interactions, self.params.p_s_i)
+        return np.array(binom.rvs(interactions, self.params.p_s_i))
 
     def _delta_r(self, i):
         return binom.rvs(i, self.params.p_i_r)
@@ -72,6 +58,19 @@ class Meas(Conditional):
     def sample(self, states):
         _, i, _ = _destructure_state(states)
         return np.reshape(i, (i.shape[0], 1))
+
+
+def generate_true_state(params: Params, num_time_steps: int, pop_start_state):
+    motion_model = Motion(params, pop_start_state.sum())
+    state_k = _normalize_state(pop_start_state)
+    gen_states = np.empty((num_time_steps, state_k.shape[0]))
+    gen_states[0, :] = state_k
+    for time_k in np.arange(1, num_time_steps):
+        state_kplus1 = motion_model.sample(state_k)
+        gen_states[time_k, :] = state_kplus1
+        # Transition to next time step
+        state_k = state_kplus1
+    return gen_states
 
 
 def _normalize_state(states):
@@ -87,7 +86,11 @@ def _normalize_state(states):
         normalized states (N, D_x):
             (columns sum to 1)
     """
-    return states / states.sum(1, keepdims=True)
+    if states.ndim > 1:
+        norm_states = states / states.sum(1, keepdims=True)
+    else:
+        norm_states = states / states.sum()
+    return norm_states
 
 
 def _denormalize_state(state, population_size: int):
@@ -99,7 +102,13 @@ def _structure_state(s, i, r):
 
 
 def _destructure_state(state):
-    s = state[:, 0]
-    i = state[:, 1]
-    r = state[:, 2]
+
+    if state.ndim > 1:
+        s = state[:, 0]
+        i = state[:, 1]
+        r = state[:, 2]
+    else:
+        s = state[0]
+        i = state[1]
+        r = state[2]
     return s, i, r

@@ -4,6 +4,7 @@ from scipy.stats import multivariate_normal as mvn
 from post_lin_smooth.iterative import iterative_post_lin_smooth
 from post_lin_smooth.smoothing import rts_smoothing
 from post_lin_smooth.slr.distributions import Gaussian
+from post_lin_smooth.slr.slr import Slr
 from models.affine import Affine
 from post_lin_smooth.analytics import nees
 import visualization as vis
@@ -12,7 +13,7 @@ import visualization as vis
 def main():
     num_samples = 20000
     K = 20
-    num_iterations = 10
+    num_iterations = 3
 
     prior_mean = np.array([1, 1, 3, 2])
     prior_cov = 1 * np.eye(4)
@@ -41,9 +42,16 @@ def main():
     c = np.zeros((H @ prior_mean).shape)
     R = 2 * np.eye(2)
 
-    prior = Gaussian
-    motion_model = Affine(A, b, Q)
-    meas_model = Affine(H, c, R)
+    motion_lin = Slr(p_x=Gaussian(),
+                     p_z_given_x=Affine(A,
+                                        b,
+                                        Q),
+                     num_samples=num_samples)
+    meas_lin = Slr(p_x=Gaussian(),
+                   p_z_given_x=Affine(H,
+                                      c,
+                                      R),
+                   num_samples=num_samples)
     true_x = gen_linear_state_seq(prior_mean, prior_cov, A, Q, K)
     y = gen_linear_meas_seq(true_x, H, R)
 
@@ -54,10 +62,8 @@ def main():
      linearizations) = iterative_post_lin_smooth(y,
                                                  prior_mean,
                                                  prior_cov,
-                                                 prior,
-                                                 motion_model,
-                                                 meas_model,
-                                                 num_samples,
+                                                 motion_lin,
+                                                 meas_lin,
                                                  num_iterations)
 
     # xs_kf, Ps_kf, xf_kf, Pf_kf = iterative_kf_rts(y, prior_mean, prior_cov,
