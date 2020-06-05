@@ -14,8 +14,8 @@ import visualization as vis
 def main():
     # np.random.seed(1)
     num_samples = 10000
-    num_iterations = 1
-    range_ = (0, 15)
+    num_iterations = 3
+    range_ = (0, 75)
 
     # Motion model
     sampling_period = 0.1
@@ -47,6 +47,9 @@ def main():
                    num_samples=num_samples)
 
     # Generate data
+    # K = 600
+    # true_states, measurements, obs_dims = gen_dummy_data(
+    #     K, sampling_period, meas_model, R)
     true_states, measurements = gen_tricky_data(meas_model, R, range_)
     obs_dims = true_states.shape[1]
     cartes_meas = np.apply_along_axis(partial(to_cartesian_coords,
@@ -66,7 +69,6 @@ def main():
     xs, Ps, xf, Pf, _ = iterative_post_lin_smooth(measurements, x_0, P_0,
                                                   motion_lin, meas_lin, num_iterations)
 
-    print(Pf[-1, :, :])
     vis.plot_nees_and_2d_est(true_states[range_[0]:range_[1], :],
                              cartes_meas,
                              xf[:, :obs_dims],
@@ -74,7 +76,7 @@ def main():
                              xs[:, :obs_dims],
                              Ps[:, :obs_dims, :obs_dims],
                              sigma_level=3,
-                             skip_cov=1)
+                             skip_cov=5)
 
 
 def gen_tricky_data(meas_model, R, range_):

@@ -58,7 +58,8 @@ def main():
          prior_cov,
          motion_lin,
          meas_lin,
-         num_iterations)
+         num_iterations,
+         normalize=True)
     plot_fhm_res(true_states, measurements, xf_slr, Pf_slr)
 
 
