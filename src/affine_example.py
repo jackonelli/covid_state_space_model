@@ -1,3 +1,4 @@
+"""Example: Iterative post. lin. smoothing with affine models"""
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.stats import multivariate_normal as mvn
@@ -5,12 +6,14 @@ from post_lin_smooth.iterative import iterative_post_lin_smooth
 from post_lin_smooth.smoothing import rts_smoothing
 from post_lin_smooth.slr.distributions import Gaussian
 from post_lin_smooth.slr.slr import Slr
+from post_lin_smooth.linearizer import Identity
 from models.affine import Affine
 from post_lin_smooth.analytics import nees
 import visualization as vis
 
 
 def main():
+    analytical_linearizer = True
     num_samples = 20000
     K = 20
     num_iterations = 3
@@ -42,16 +45,22 @@ def main():
     c = np.zeros((H @ prior_mean).shape)
     R = 2 * np.eye(2)
 
-    motion_lin = Slr(p_x=Gaussian(),
-                     p_z_given_x=Affine(A,
-                                        b,
-                                        Q),
-                     num_samples=num_samples)
-    meas_lin = Slr(p_x=Gaussian(),
-                   p_z_given_x=Affine(H,
-                                      c,
-                                      R),
-                   num_samples=num_samples)
+    if analytical_linearizer:
+        print("Using analytical linearizer")
+        motion_lin = Identity(A, b, Q)
+        meas_lin = Identity(H, c, R)
+    else:
+        print("Using SLR linearizer")
+        motion_lin = Slr(p_x=Gaussian(),
+                         p_z_given_x=Affine(A,
+                                            b,
+                                            Q),
+                         num_samples=num_samples)
+        meas_lin = Slr(p_x=Gaussian(),
+                       p_z_given_x=Affine(H,
+                                          c,
+                                          R),
+                       num_samples=num_samples)
     true_x = gen_linear_state_seq(prior_mean, prior_cov, A, Q, K)
     y = gen_linear_meas_seq(true_x, H, R)
 
