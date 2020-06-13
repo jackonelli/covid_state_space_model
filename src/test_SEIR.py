@@ -62,7 +62,13 @@ numParticles = 500
 That means that we in fact estimate p(x_t | y_{1:t+7}). However, to get the filter estimate we just
 need to predict 7 steps ahead."""
 y_shift = np.concatenate((y[:,params.lag:,:], y[:,0:params.lag,:]), axis=1)
-pf = bPF(model, y_shift, N=numParticles)
+
+# Alternatively, use Stockholm data ####
+y_sthlm = np.genfromtxt('./data/New_UCI_June10.csv', delimiter=',')
+y_sthlm = y_sthlm[np.newaxis, 1:]
+########################################
+
+pf = bPF(model, y_shift, N=numParticles)  # y_shift is simulated
 pf.filter()
 
 """Finally, we visualize the results."""
