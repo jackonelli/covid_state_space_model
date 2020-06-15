@@ -31,7 +31,13 @@ def binom_by_normal(n, p, N=1):
         samples = np.zeros(N,dtype=np.int64)
         large_n = np.invert(small_n)
         num_small_n = sum(small_n)
-        samples[small_n] = np.int64(binom.rvs(n[small_n].astype(np.int32), p, size=num_small_n))
-        samples[large_n] = np.int64(
-            np.random.normal(n[large_n] * p, np.sqrt(n[large_n] * p * (1 - p)), size=N - num_small_n))
+        if np.asarray(p).ndim==0:  # Single scalar variance
+            samples[small_n] = np.int64(binom.rvs(n[small_n].astype(np.int32), p, size=num_small_n))
+            samples[large_n] = np.int64(
+                np.random.normal(n[large_n] * p, np.sqrt(n[large_n] * p * (1 - p)), size=N - num_small_n))
+        else:
+            samples[small_n] = np.int64(binom.rvs(n[small_n].astype(np.int32), p[small_n], size=num_small_n))
+            samples[large_n] = np.int64(
+                np.random.normal(n[large_n] * p[large_n], np.sqrt(n[large_n] * p[large_n] * (1 - p[large_n])), size=N - num_small_n))
+
         return samples

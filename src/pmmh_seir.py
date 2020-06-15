@@ -1,16 +1,18 @@
 """PMMH sampler for SEIR model"""
 import numpy as np
+import matplotlib.pyplot as plt
 from smc.bPF import bPF
 #from models.seir import SEIR, Param
 import models.seir as md
 from helpers import *
 
 
+
 class Proposal:
     def __init__(self):
         # Prior means
         mu_prior = [logit(1 / 5.1), logit(1 / 5), logit(1 / 1000), 2, logit(0.1), -.12]
-        self.Sigma = np.diag(np.sqrt(np.abs(mu_prior)) * 0.001)  # Independent RW
+        self.Sigma = np.diag(np.sqrt(np.abs(mu_prior)) * 0.01)  # Independent RW
 
     def sample(self, theta_now: md.Param):
         sample_these_inds = [0,1,2]
@@ -44,6 +46,13 @@ def pmmh_sampler(theta_now, y, numMCMC, model: md.SEIR, numParticles=500):
     logZ_now = pf.logZ
     logZ_log[0] = logZ_now
 
+    ############## DEBUGGING
+    # plt.figure()
+    # plt.plot(y[0,:,:])
+    # plt.plot(pf.x_filt[2, :] * logistic(pf.model.param.get()[2]), '--')
+    # plt.title("Observations (ICU/day)")
+    # plt.pause(0.3)
+
     # Main MCMC loop
     for r in range(1, numMCMC):
         if r % 10 == 0:
@@ -54,6 +63,12 @@ def pmmh_sampler(theta_now, y, numMCMC, model: md.SEIR, numParticles=500):
         model.param.set(theta_new)
         pf.filter()
         logZ_new = pf.logZ
+
+        ############## DEBUGGING
+        # plt.plot(y[0, :, :])
+        # plt.plot(pf.x_filt[2, :] * logistic(pf.model.param.get()[2]), '--')
+        # plt.title("Observations (ICU/day)")
+        # plt.pause(0.3)
 
         # Accept/reject
         log_acceptance_prob = logZ_new - logZ_now + md.prior_log_pdf(theta_new) - md.prior_log_pdf(

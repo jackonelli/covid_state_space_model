@@ -32,7 +32,9 @@ class Param:
         self.ei = d_param[0]
         self.ir = d_param[1]
         self.ic = d_param[2]
-        self.bp = b_param # 4d
+        self.b_scale = b_param[0]
+        self.b_corr = b_param[1]
+        self.b_std = b_param[2]
         self.dth = 6  # Number of learnable parameters
         self.pop = pop
         self.lag = 7  # Hard coded time lag for observations
@@ -42,22 +44,26 @@ class Param:
         self.ei = logistic(theta[0])
         self.ir = logistic(theta[1])
         self.ic = logistic(theta[2])
-        self.bp[0:3] = [theta[3], logistic(theta[4]), theta[5]]
+        self.b_scale = np.exp(theta[3])
+        self.b_corr = logistic(theta[4]) * 2 - 1
+        self.b_std = np.exp(theta[5])
 
     def get(self):
         theta = np.zeros(self.dth)
         theta[0] = logit(self.ei)
         theta[1] = logit(self.ir)
         theta[2] = logit(self.ic)
-        #theta[3:] = np.concatenate((logit(self.bp[0:2]), self.bp[2:2]))
-        theta[3:] = [self.bp[0], logit(self.bp[1]), self.bp[2]]
+        theta[3] = np.log(self.b_scale)
+        theta[4] = logit((self.b_corr+1)/2)
+        theta[5] = np.log(self.b_std)
         return theta
 
 
 class SEIR:
     def __init__(self, param: Param):
-        self.dx = 3  # SEIR, but R is deterministc so we only represent SEI in state vector
-        self.x_type = np.int64 # Hacky...
+        self.dx = 4  # SEIR, but R is deterministc so we only represent SEI in state vector. Extra state for b
+        #self.x_type = np.int64 # Hacky...
+        self.x_type = np.float64  # Hacky...
         self.dy = 1  # ICU measurements
         self.init_state = None
         self.param = param
@@ -91,17 +97,24 @@ class SEIR:
                 # x1[1, :] = binom_by_normal(self.param.pop, e0 / self.param.pop, N=N)
                 # x1[2, :] = binom_by_normal(self.param.pop, i0 / self.param.pop, N=N)
 
-                x1[0, :] = np.maximum(0, np.random.normal(loc=s0, scale=np.sqrt(s0)/3, size=N)).astype(np.int64)
-                x1[1, :] = np.maximum(0, np.random.normal(loc=e0, scale=np.sqrt(e0)/3, size=N)).astype(np.int64)
-                x1[2, :] = np.maximum(0, np.random.normal(loc=i0, scale=np.sqrt(r0)/3, size=N)).astype(np.int64)
+                x1[0, :] = np.maximum(0, np.random.normal(loc=s0, scale=np.sqrt(s0)/3, size=N)) #.astype(np.int64)
+                x1[1, :] = np.maximum(0, np.random.normal(loc=e0, scale=np.sqrt(e0)/3, size=N)) #.astype(np.int64)
+                x1[2, :] = np.maximum(0, np.random.normal(loc=i0, scale=np.sqrt(i0)/3, size=N)) #.astype(np.int64)
+                # Initial state for b[0] - chosen quite arbitrary here (as all initial states)
+                x1[3, :] = np.random.normal(loc=np.log(1.6/self.param.b_scale), scale=0.1, size=N)
 
 
         else:  # Propagate
-            b = b_val_FHM(self.param, time)
+
+            #b = b_val_FHM(self.param, time)
+            b = self.param.b_scale * np.exp(x0[3,:]) # Stochastic b(t), part of state
             de = binom_by_normal(x0[0, :] * x0[2, :], b / self.param.pop, N)
             di = binom_by_normal(x0[1, :], self.param.ei, N)
             dr = binom_by_normal(x0[2, :], self.param.ir, N)
-            x1 = x0 + [-de, de - di, di - dr]
+            x1 = x0 + [-de, de - di, di - dr, np.zeros(N)]  # Last zero is just to get the correct size, it will be overwritten below. Seems like it has to be an array for broadcasting to work?!
+            # Random walk for b
+            x1[3,:] = np.random.normal(loc = self.param.b_corr*x0[3,:], scale=self.param.b_std, size=N)
+
         return x1
 
     def sample_obs(self, x, time, N=1):
@@ -110,7 +123,7 @@ class SEIR:
 
     def simulate(self, T, N=1):
         """We work with 3d arrays for the states/obs (d,T,N)"""
-        x = np.zeros((self.dx, T, N), dtype=np.int64)
+        x = np.zeros((self.dx, T, N), dtype=self.x_type)
         y = np.full((self.dy, T, N), None)
 
         for t in range(T):
