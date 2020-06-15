@@ -11,7 +11,8 @@ from helpers import *
 class Proposal:
     def __init__(self):
         # Prior means
-        mu_prior = [logit(1 / 5.1), logit(1 / 5), logit(1 / 1000), 2, logit(0.1), -.12]
+        #mu_prior = [logit(1 / 5.1), logit(1 / 5), logit(1 / 1000), 2, logit(0.1), -.12]  # For FHM
+        mu_prior = [logit(1 / 5.1), logit(1 / 5), logit(1 / 1000), np.log(0.2), np.log((0.9+1)/2), np.log(0.1)]  # For RW
         self.Sigma = np.diag(np.sqrt(np.abs(mu_prior)) * 0.01)  # Independent RW
 
     def sample(self, theta_now: md.Param):

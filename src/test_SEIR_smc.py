@@ -11,7 +11,6 @@ The state is:
 """
 import numpy as np
 import matplotlib.pyplot as plt
-from pmmh_seir import pmmh_sampler
 from smc.bPF import bPF
 from helpers import *
 
@@ -21,8 +20,7 @@ Run SMC on the SEIR model (no PMCMC)
 """
 
 
-#def main():
-""" We separate the parameters for the dynamic model into three parts:
+"""" We separate the parameters for the dynamic model into three parts:
 1) pei and pir, 2) parameters needed to define b and 3) size of population"""
 pei = 1 / 5.1
 pir = 1 / 5
@@ -44,7 +42,7 @@ if FHM:
     epsilon and the offset between day 0 and March 16. For instance, if we want the UCI 
     measurements to start on March 13, and we assume a 7 day delay in the measurement model day 0 
     would be March 6 and the offset would be -10. """
-    from models.seir import SEIR, Param
+    from models.seir import SEIR, Param, b_val_FHM
     b_par = np.array([2, 0.1, -0.12, -10])
     init_state = np.array([s0, e0, i0], dtype=np.int64)  # For FHM model
 else:
@@ -54,8 +52,8 @@ else:
     """
     from models.seir_rwb import SEIR, Param
     b_scale = 0.2
-    b_corr = 0.9
-    b_std = 0.1
+    b_corr = 0.96
+    b_std = 0.02
     b_par = np.array([b_scale, b_corr, b_std])
     init_state = np.array([s0, e0, i0, np.log(1.6/b_scale)], dtype=np.float64)  # For RW model
 
@@ -113,7 +111,7 @@ plt.legend([e_line, i_line, r_line, pf_line], ['e', 'i', 'r', 'PF mean'])
 """ Plot b(t) """
 plt.figure()
 if FHM:
-    pass
+    plt.plot(b_val_FHM(params, np.arange(T)),'r-')
 else:
     plt.plot(params.b_scale * np.exp(x[3,:]),'r-')
     plt.plot(model_params.b_scale * np.exp(pf.x_filt[3, :]), 'r--')

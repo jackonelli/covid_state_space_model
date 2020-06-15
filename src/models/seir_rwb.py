@@ -5,21 +5,13 @@ from scipy.stats import norm
 from helpers import *
 
 
-def b_val_FHM(params, time):
-    b_par = params.bp
-    theta = b_par[0]
-    delta = b_par[1]
-    eps = b_par[2]
-    t_offset = b_par[3]
-    b = theta * (delta + (1 - delta) / (1 + np.exp(-eps * (time + t_offset))))
-    return b
-
-
 def prior_log_pdf(theta):
     """Computes parameter prior log pdf"""
 
     # Prior means
-    mu_prior = [logit(1 / 5.1), logit(1 / 5), logit(1 / 1000), 2, logit(0.1), -.12]
+    #mu_prior = [logit(1 / 5.1), logit(1 / 5), logit(1 / 1000), 2, logit(0.1), -.12]
+    mu_prior = [logit(1 / 5.1), logit(1 / 5), logit(1 / 1000), np.log(0.2), np.log((0.9 + 1) / 2),  np.log(0.1)]  # For RW
+
     sigma_prior = np.sqrt(np.abs(mu_prior)) * 3  # <-- No idea how wide the priors should be. Do we want them to be informative?
 
     logZ = np.sum(norm.logpdf(theta, loc=mu_prior, scale=sigma_prior))
