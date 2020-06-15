@@ -132,6 +132,7 @@ plt.title("Effective number of particles")
 """""""""""""""""""""""""""""""Run PMMH sampler"""""""""""""""""""""""""""""""
 numMCMC = 200
 theta_init = params.get()
+theta_init *= 0.5
 #theta_init[0:3] = theta_init[0:2]*0.5  # Only first three parameters sampled now (hard coded in PMMH script)
 
 # Get initial filter estimate as reference
@@ -177,10 +178,15 @@ plt.plot(pf.x_filt[2,:]*logistic(pf.model.param.get()[2]),'--',label='7-day smoo
 plt.legend()
 plt.title("Observations (ICU/day)")
 
+
+""" Some diagnostics """
 plt.figure()
 plt.plot(pf.N_eff)
 plt.title("Effective number of particles")
 
+plt.figure()
+plt.plot(logZ)
+plt.title("Likelihood estimates")
 
 #if __name__ == "__main__":
 #    main()
