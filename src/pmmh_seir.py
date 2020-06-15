@@ -16,7 +16,7 @@ class Proposal:
         self.Sigma = np.diag(np.sqrt(np.abs(mu_prior)) * 0.01)  # Independent RW
 
     def sample(self, theta_now: md.Param):
-        sample_these_inds = [0,1,2]
+        sample_these_inds = [0,1,2,3,4,5]
         theta_new = np.copy(theta_now)
         theta_new[sample_these_inds] = np.random.multivariate_normal(theta_now[sample_these_inds], cov=self.Sigma[sample_these_inds,:][:,sample_these_inds])
         return theta_new

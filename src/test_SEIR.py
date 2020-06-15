@@ -131,8 +131,8 @@ plt.title("Effective number of particles")
 
 """""""""""""""""""""""""""""""Run PMMH sampler"""""""""""""""""""""""""""""""
 numMCMC = 200
-theta_init = params.get()*0.5
-#theta_init[2] = logit(1/500)
+theta_init = params.get()
+#theta_init[0:3] = theta_init[0:2]*0.5  # Only first three parameters sampled now (hard coded in PMMH script)
 
 # Get initial filter estimate as reference
 model_params.set(theta_init)
