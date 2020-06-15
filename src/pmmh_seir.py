@@ -8,12 +8,18 @@ from helpers import *
 
 class Proposal:
     def __init__(self):
-        pass
+        # Prior means
+        mu_prior = [logit(1 / 5.1), logit(1 / 5), logit(1 / 1000), 2, logit(0.1), -.12]
+        self.Sigma = np.diag(np.sqrt(np.abs(mu_prior)) * 0.001)  # Independent RW
 
     def sample(self, theta_now: md.Param):
-        return theta_now
+        sample_these_inds = [0,1,2]
+        theta_new = np.copy(theta_now)
+        theta_new[sample_these_inds] = np.random.multivariate_normal(theta_now[sample_these_inds], cov=self.Sigma[sample_these_inds,:][:,sample_these_inds])
+        return theta_new
 
-    def log_pdf(self, theta_now, theta_new):
+    def log_pdf_ratio(self, theta_now, theta_new):
+        """Implement ratio directly. Zero for symmetric random walk."""
         return .0
 
 
@@ -22,9 +28,12 @@ def pmmh_sampler(theta_now, y, numMCMC, model: md.SEIR, numParticles=500):
 
     # Initialize/store traces
     theta_log = np.zeros((model.param.dth, numMCMC))
-    logZ = np.zeros(numMCMC)
+    logZ_log = np.zeros(numMCMC)
     theta_log[:, 0] = theta_now
     model.param.set(theta_now)
+
+    # Diagnostics
+    accept_log = np.zeros(numMCMC)
 
     # Set up proposal
     prop = Proposal()
@@ -33,7 +42,7 @@ def pmmh_sampler(theta_now, y, numMCMC, model: md.SEIR, numParticles=500):
     pf = bPF(model, y, N=numParticles)
     pf.filter()
     logZ_now = pf.logZ
-    logZ[0] = logZ_now
+    logZ_log[0] = logZ_now
 
     # Main MCMC loop
     for r in range(1, numMCMC):
@@ -48,13 +57,14 @@ def pmmh_sampler(theta_now, y, numMCMC, model: md.SEIR, numParticles=500):
 
         # Accept/reject
         log_acceptance_prob = logZ_new - logZ_now + md.prior_log_pdf(theta_new) - md.prior_log_pdf(
-            theta_now) + prop.log_pdf(theta_new, theta_now) - prop.log_pdf(theta_now, theta_new)
+            theta_now) + prop.log_pdf_ratio(theta_new, theta_now)
         accept = np.random.random() < np.exp(log_acceptance_prob)
+        accept_log[r] = np.min([1, np.exp(log_acceptance_prob)])
         if accept:
             logZ_now = logZ_new
             theta_now = theta_new
 
         # Store trace
-        logZ[r] = logZ_now
+        logZ_log[r] = logZ_now
         theta_log[:, r] = theta_now
-    return theta_log
+    return theta_log, logZ_log, accept_log

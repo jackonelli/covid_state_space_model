@@ -4,6 +4,14 @@ import numpy as np
 from scipy.stats import binom
 
 
+def logistic(x):
+    return 1/(1 + np.exp(-x))
+
+
+def logit(x):
+    return -np.log(1/x - 1)
+
+
 def igamrnd(a, b, size=None):
     """Inverse gamma random number generator"""
     return 1 / np.random.gamma(shape=a, scale=1 / b, size=size)
