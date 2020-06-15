@@ -1,6 +1,6 @@
 """Bootstrap particle filter"""
 import numpy as np
-from models.lgss1d import LGSS1d
+from math import isnan
 
 
 def exp_norm(logW):

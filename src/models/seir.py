@@ -17,7 +17,14 @@ def b_val_FHM(params, time):
 
 def prior_log_pdf(theta):
     """Computes parameter prior log pdf"""
-    return 0.
+
+    # Prior means
+    mu_prior = [logit(1 / 5.1), logit(1 / 5), logit(1 / 1000), 2, logit(0.1), -.12]
+    sigma_prior = np.sqrt(np.abs(mu_prior)) * 3  # <-- No idea how wide the priors should be. Do we want them to be informative?
+
+    logZ = np.sum(norm.logpdf(theta, loc=mu_prior, scale=sigma_prior))
+    return logZ
+
 
 
 class Param:
@@ -26,22 +33,24 @@ class Param:
         self.ir = d_param[1]
         self.ic = d_param[2]
         self.bp = b_param # 4d
-        self.dth = 7  # Number of learnable parameters
+        self.dth = 6  # Number of learnable parameters
         self.pop = pop
         self.lag = 7  # Hard coded time lag for observations
 
     def set(self, theta):
-        self.ei = theta[0]
-        self.ir = theta[1]
-        self.ic = theta[2]
-        self.bp = theta[3:]
+        """This sets the *learnable* parameters"""
+        self.ei = logistic(theta[0])
+        self.ir = logistic(theta[1])
+        self.ic = logistic(theta[2])
+        self.bp[0:3] = [theta[3], logistic(theta[4]), theta[5]]
 
     def get(self):
         theta = np.zeros(self.dth)
-        theta[0] = self.ei
-        theta[1] = self.ir
-        theta[2] = self.ic
-        theta[3:] = self.bp
+        theta[0] = logit(self.ei)
+        theta[1] = logit(self.ir)
+        theta[2] = logit(self.ic)
+        #theta[3:] = np.concatenate((logit(self.bp[0:2]), self.bp[2:2]))
+        theta[3:] = [self.bp[0], logit(self.bp[1]), self.bp[2]]
         return theta
 
 
