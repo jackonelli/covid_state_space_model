@@ -15,14 +15,34 @@ def b_val_FHM(params, time):
     return b
 
 
+def prior_log_pdf(theta):
+    """Computes parameter prior log pdf"""
+    return 0.
+
+
 class Param:
     def __init__(self, d_param, b_param, pop):
         self.ei = d_param[0]
         self.ir = d_param[1]
         self.ic = d_param[2]
-        self.bp = b_param
+        self.bp = b_param # 4d
+        self.dth = 7  # Number of learnable parameters
         self.pop = pop
         self.lag = 7  # Hard coded time lag for observations
+
+    def set(self, theta):
+        self.ei = theta[0]
+        self.ir = theta[1]
+        self.ic = theta[2]
+        self.bp = theta[3:]
+
+    def get(self):
+        theta = np.zeros(self.dth)
+        theta[0] = self.ei
+        theta[1] = self.ir
+        theta[2] = self.ic
+        theta[3:] = self.bp
+        return theta
 
 
 class SEIR:
@@ -94,3 +114,4 @@ class SEIR:
                 y[:, t, :] = self.sample_obs(x[:, t - self.param.lag, :], t, N=N)
 
         return x, y
+

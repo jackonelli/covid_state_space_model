@@ -36,9 +36,12 @@ class bPF:
         self.W = np.zeros((self.T, self.N))  # Normalized weight
         self.x_filt = np.zeros((dx, self.T))  # Store filter mean
         self.N_eff = np.zeros(self.T) # Efficient number of particles
-        self.logZ = 0. # Log-likelihood
+        self.logZ = 0.  # Log-likelihood estimate
 
     def filter(self, X_ref=None, ancestor_sampling=None):
+        """Run the particle filter from time 0 to T-1"""
+        self.logZ = 0. # Reinitialize log-likelihood estimate
+
         for t in range(self.T):
             # Sample from bootstrap proposal
             if t == 0:  # Initialize from prior

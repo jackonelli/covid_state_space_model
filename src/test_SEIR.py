@@ -12,6 +12,7 @@ The state is:
 import numpy as np
 import matplotlib.pyplot as plt
 from models.seir import SEIR, Param
+from pmmh_seir import pmmh_sampler
 from smc.bPF import bPF
 
 
@@ -24,7 +25,7 @@ Main runs a toy example to illustrate the output"""
 1) pei and pir, 2) parameters needed to define b and 3) size of population"""
 pei = 1 / 5.1
 pir = 1 / 5
-pic = 1/1000 # ?????
+pic = 1 / 1000 # ?????
 dp = np.array([pei, pir, pic])
 """For the FHM model, the parameters needed to define the function b are theta, delta,
 epsilon and the offset between day 0 and March 16. For instance, if we want the UCI 
@@ -83,20 +84,28 @@ r_line = plt.plot(population_size - np.sum(x, axis=0), 'g-')[0]
 # Plot filter estimate
 plt.plot(pf.x_filt[1,:], 'b--')
 plt.plot(pf.x_filt[2,:], 'r--')
+pf_line = plt.plot([],[],'k--')
 plt.plot(population_size - np.sum(pf.x_filt, axis=0), 'g--')
-plt.legend([e_line, i_line, r_line], ['e', 'i', 'r'])
-
+plt.legend([e_line, i_line, r_line, pf_line], ['e', 'i', 'r', 'PF mean'])
 
 plt.figure()
 plt.plot(y[0,:,:])
 plt.title("Observations (ICU/day)")
 plt.show()
 
-
 plt.figure()
 plt.plot(pf.N_eff)
 plt.title("Effective number of particles")
 
+
+"""""""""""""""""""""""""""""""Run PMMH sampler"""""""""""""""""""""""""""""""
+numMCMC = 100
+th_pmmh = pmmh_sampler(params.get(), y_shift, numMCMC, model, numParticles=500)
+
+# Plot
+plt.figure()
+plt.plot(th_pmmh.T)
+plt.xlabel("MCMC iteration")
 
 #if __name__ == "__main__":
 #    main()
