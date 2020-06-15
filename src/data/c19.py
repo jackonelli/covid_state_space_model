@@ -37,7 +37,14 @@ class C19Data:
         self.in_hospital = in_hospital
 
     @staticmethod
-    def from_json_file(data_path: Path) -> "C19Data":
+    def from_csv(data_path: Path) -> "C19Data":
+        """Load data from csv file"""
+        raw_data = np.loadtxt(data_path, dtype=int, delimiter=";", skiprows=1)
+
+        return C19Data(*raw_data)
+
+    @staticmethod
+    def from_json(data_path: Path) -> "C19Data":
         """Load data from json file"""
         with open(data_path) as json_file:
             raw_data = json.load(json_file)
