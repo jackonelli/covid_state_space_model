@@ -37,6 +37,7 @@ r0 = 1000
 s0 = population_size - i0 - e0 - r0
 
 FHM = False
+STHLM = True
 
 if FHM:
     """For the FHM model, the parameters needed to define the function b are theta, delta,
@@ -62,68 +63,81 @@ else:
 params = Param(dp, b_par, population_size)
 
 
-""" Create a model instance"""
-sys0 = SEIR(params)
+if STHLM:
+    """ Use STHLM data """
+    y_sthlm = np.genfromtxt('./data/New_UCI_June10.csv', delimiter=',')
+    y_shift = y_sthlm[np.newaxis, 1:, np.newaxis]  # No shift needed since there are no leading None's in the real data
+    T = y_shift.shape[1]
+else:
+    """ Create a true system instance"""
+    sys0 = SEIR(params)
 
-"""We start our simulation with an initial state, selected fairly arbitrarily."""
-sys0.init_state = init_state
+    """We start our simulation with an initial state, selected fairly arbitrarily."""
+    sys0.init_state = init_state
 
-"""We initiate our state at time 0 and observe measurements from time 1 to T. What's the true 
-value of T? We use 60 here but we have more measurements."""
-T = 120
+    """We initiate our state at time 0 and observe measurements from time 1 to T. What's the true 
+    value of T? We use 60 here but we have more measurements."""
+    T = 120
 
-"""Let us generate a random sequence of states and store it in x"""
-x, y = sys0.simulate(T)
+    """Let us generate a random sequence of states and store it in x"""
+    x, y = sys0.simulate(T)
+
+    """Since there is a 7 day delay in the observations we shift the data sequence to account for this.
+    That means that we in fact estimate p(x_t | y_{1:t+7}). However, to get the filter estimate we just
+    need to predict 7 steps ahead."""
+    y_shift = np.concatenate((y[:, params.lag:, :], y[:, 0:params.lag, :]), axis=1)
 
 
 """Filter using bootstrap PF"""
-model_params = Param(dp, b_par, population_size)
-model = SEIR(model_params)  # Can we make a copy of params here instead?
+model_params = Param(dp, b_par, population_size)   # Can we make a copy of params here instead?
+model = SEIR(model_params)
 numParticles = 500
-"""Since there is a 7 day delay in the observations we shift the data sequence to account for this.
-That means that we in fact estimate p(x_t | y_{1:t+7}). However, to get the filter estimate we just
-need to predict 7 steps ahead."""
-y_shift = np.concatenate((y[:,params.lag:,:], y[:,0:params.lag,:]), axis=1)
 
-# Alternatively, use Stockholm data ####
-y_sthlm = np.genfromtxt('./data/New_UCI_June10.csv', delimiter=',')
-y_sthlm = y_sthlm[np.newaxis, 1:, np.newaxis]
-########################################
 
 pf = bPF(model, y_shift, N=numParticles)  # y_shift is simulated
 pf.filter()
 
 """Finally, we visualize the results."""
 plt.figure()
-plt.title("Simulating a stochastic SEIR model")
-plt.xlabel("Days, Day 0 = March 10")
-plt.ylabel("Number of individuals")
-#s_line, = plt.plot(x[0, :])
-e_line = plt.plot(x[1,:,:], 'b-')[0]
-i_line = plt.plot(x[2,:,:], 'r-')[0]
-r_line = plt.plot(population_size - np.sum(x[0:3,:], axis=0), 'g-')[0]
+if STHLM:
+    plt.title("Estimate for STHLM based on SEIR model")
+    plt.xlabel("Days")
+    plt.ylabel("Number of individuals")
+else:
+    plt.title("Simulating a stochastic SEIR model")
+    plt.xlabel("Days, Day 0 = March 10")
+    plt.ylabel("Number of individuals")
+    # s_line, = plt.plot(x[0, :])
+    plt.plot(x[1,:,:], 'b-')[0]
+    plt.plot(x[2,:,:], 'r-')[0]
+    plt.plot(population_size - np.sum(x[0:3,:], axis=0), 'g-')[0]
+    true_state_line = plt.plot([None], [None], 'k--')[0]
 # Plot filter estimate
-plt.plot(pf.x_filt[1,:], 'b--')
-plt.plot(pf.x_filt[2,:], 'r--')
-pf_line = plt.plot([None],[None],'k--')[0]
-plt.plot(population_size - np.sum(pf.x_filt[0:3,:], axis=0), 'g--')
-plt.legend([e_line, i_line, r_line, pf_line], ['e', 'i', 'r', 'PF mean'])
+e_line = plt.plot(pf.x_filt[1,:], 'b--')
+i_line = plt.plot(pf.x_filt[2,:], 'r--')
+r_line = plt.plot(population_size - np.sum(pf.x_filt[0:3,:], axis=0), 'g--')
+if STHLM:
+    plt.legend([e_line, i_line, r_line], ['e', 'i', 'r'])
+else:
+    plt.legend([e_line, i_line, r_line, true_state_line], ['e', 'i', 'r', 'True state'])
 
 """ Plot b(t) """
 plt.figure()
 if FHM:
     pass
 else:
-    plt.plot(params.b_scale * np.exp(x[3,:]),'r-')
+    if not STHLM:
+        plt.plot(params.b_scale * np.exp(x[3,:]),'r-')
     plt.plot(model_params.b_scale * np.exp(pf.x_filt[3, :]), 'r--')
-
 plt.title("b(t)")
 
+""" Plot data vs "predictions" """
 plt.figure()
 plt.plot(y_shift[0,:,:])
 plt.plot(pf.x_filt[2,:]*logistic(pf.model.param.get()[2]),'--')
 plt.title("Observations (ICU/day)")
 
+""" Plot Neff """
 plt.figure()
 plt.plot(pf.N_eff)
 plt.title("Effective number of particles")
@@ -143,46 +157,77 @@ x_filt_init = pf.x_filt.copy()
 # PMMH
 th_pmmh, logZ, accept_prob = pmmh_sampler(theta_init, y_shift, numMCMC, model, numParticles=500)
 
-# Plot
-plot_these = [0,1,2]
+"""Finally, we visualize the results."""
+# Traces
+plot_these = [0,1,2,3,4,5]
 plt.figure()
 plt.plot(th_pmmh[plot_these,:].T)
-plt.gca().set_prop_cycle(None)
-plt.plot([0, numMCMC-1],np.ones((2,1))*params.get()[plot_these],'--')
+if not STHLM:
+    plt.gca().set_prop_cycle(None)
+    plt.plot([0, numMCMC-1],np.ones((2,1))*params.get()[plot_these],'--')
 plt.xlabel("MCMC iteration")
 
+# Accept probability
 plt.figure()
 plt.plot(accept_prob)
 
+# Rerun filter for last iteration
+model_params.set(th_pmmh[:,-1])
 pf.filter()
+
+# Estimates at init and last
 plt.figure()
-plt.title("Simulating a stochastic SEIR model")
-plt.xlabel("Days, Day 0 = March 10")
-plt.ylabel("Number of individuals")
-#s_line, = plt.plot(x[0, :])
-e_line = plt.plot(x[1,:,:], 'b-')[0]
-i_line = plt.plot(x[2,:,:], 'r-')[0]
-r_line = plt.plot(population_size - np.sum(x[0:2,:], axis=0), 'g-')[0]
+if STHLM:
+    plt.title("Estimate for STHLM based on SEIR model")
+    plt.xlabel("Days")
+    plt.ylabel("Number of individuals")
+else:
+    plt.title("Simulating a stochastic SEIR model")
+    plt.xlabel("Days, Day 0 = March 10")
+    plt.ylabel("Number of individuals")
+    # s_line, = plt.plot(x[0, :])
+    plt.plot(x[1,:,:], 'b--')[0]
+    plt.plot(x[2,:,:], 'r--')[0]
+    plt.plot(population_size - np.sum(x[0:3,:], axis=0), 'g--')[0]
+    true_state_line = plt.plot([None], [None], 'k--')[0]
 # Plot filter estimate
-plt.plot(pf.x_filt[1,:], 'b--')
-plt.plot(pf.x_filt[2,:], 'r--')
-pf_line = plt.plot([None],[None],'k--')[0]
-plt.plot(population_size - np.sum(pf.x_filt[0:2,:], axis=0), 'g--')
-plt.legend([e_line, i_line, r_line, pf_line], ['e', 'i', 'r', 'PF mean'])
+e_line, = plt.plot(pf.x_filt[1,:], 'b-')
+i_line, = plt.plot(pf.x_filt[2,:], 'r-')
+r_line, = plt.plot(population_size - np.sum(pf.x_filt[0:3,:], axis=0), 'g-')
 
-""" Plot ICU from estimated state """
+e_line_init, = plt.plot(x_filt_init[1,:], 'b-.')
+i_line_init, = plt.plot(x_filt_init[2,:], 'r-.')
+r_line_init, = plt.plot(population_size - np.sum(x_filt_init[0:3,:], axis=0), 'g-.')
+
+if STHLM:
+    plt.legend([e_line, i_line, r_line], ['e', 'i', 'r'])
+else:
+    plt.legend([e_line, i_line, r_line, true_state_line], ['e', 'i', 'r', 'True state'])
+
+""" Plot b(t) """
 plt.figure()
-plt.plot(y_shift[0,:,:],label='y')
-plt.plot(x_filt_init[2,:]*logistic(theta_init[2]),'--',label='7-day smooth (init)')
-plt.plot(pf.x_filt[2,:]*logistic(pf.model.param.get()[2]),'--',label='7-day smooth (final MCMC sample)')
-plt.legend()
+if FHM:
+    pass
+else:
+    plt.plot(model_params.b_scale * np.exp(pf.x_filt[3, :]), 'r-')
+    plt.plot(np.exp(theta_init[3]) * np.exp(x_filt_init[3, :]), 'r-.')
+    if not STHLM:
+        plt.plot(params.b_scale * np.exp(x[3,:]),'k--')
+plt.title("b(t)")
+
+""" Plot data vs "predictions" """
+plt.figure()
+plt.plot(y_shift[0,:,:],'k--',label='Data')
+plt.plot(pf.x_filt[2,:]*logistic(pf.model.param.get()[2]),'r-',label='7-day smooth (last MCMC)')
+plt.plot(x_filt_init[2,:]*logistic(theta_init[2]),'r-.',label='7-day smooth (init)')
 plt.title("Observations (ICU/day)")
+plt.legend()
 
-
-""" Some diagnostics """
+""" Plot Neff """
 plt.figure()
 plt.plot(pf.N_eff)
 plt.title("Effective number of particles")
+
 
 plt.figure()
 plt.plot(logZ)

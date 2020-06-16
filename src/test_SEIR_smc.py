@@ -89,7 +89,9 @@ y_sthlm = np.genfromtxt('./data/New_UCI_June10.csv', delimiter=',')
 y_sthlm = y_sthlm[np.newaxis, 1:, np.newaxis]
 ########################################
 
-pf = bPF(model, y_shift, N=numParticles)  # y_shift is simulated
+y = y_sthlm  # <-- this is what we filter and plot below (y_shift is simulated)
+
+pf = bPF(model, y, N=numParticles)
 pf.filter()
 
 """Finally, we visualize the results."""
@@ -119,7 +121,7 @@ else:
 plt.title("b(t)")
 
 plt.figure()
-plt.plot(y_shift[0,:,:])
+plt.plot(y[0,:,:])
 plt.plot(pf.x_filt[2,:]*logistic(pf.model.param.get()[2]),'--')
 plt.title("Observations (ICU/day)")
 
